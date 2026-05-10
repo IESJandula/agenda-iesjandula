@@ -21,6 +21,7 @@ import agenda.dto.EventoResponseDTO;
 import agenda.enums.EstadoEvento;
 import agenda.model.Evento;
 import agenda.service.EventoService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -31,13 +32,14 @@ public class EventoController {
     private final EventoService eventoService;
 
     @PostMapping
-    public ResponseEntity<Evento> crearEvento(@RequestBody CrearEventoRequest request) {
+    public ResponseEntity<EventoResponseDTO> crearEvento(@Valid @RequestBody CrearEventoRequest request) {
         Evento creado = eventoService.crearEvento(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
+        EventoResponseDTO response = eventoService.convertirAResponse(creado);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
-    public ResponseEntity<List<Evento>> obtenerTodos() {
+    public ResponseEntity<List<EventoResponseDTO>> obtenerTodos() {
         return ResponseEntity.ok(eventoService.obtenerTodos());
     }
 
@@ -50,7 +52,7 @@ public class EventoController {
 
     @PutMapping("/{id}")
     public ResponseEntity<EventoResponseDTO> actualizarEvento(@PathVariable Long id,
-            @RequestBody CrearEventoRequest request) {
+            @Valid @RequestBody CrearEventoRequest request) {
         EventoResponseDTO actualizado = eventoService.actualizarEvento(id, request);
         if (actualizado == null) {
             return ResponseEntity.notFound().build();
@@ -68,7 +70,7 @@ public class EventoController {
     }
 
     @GetMapping("/estado/{estado}")
-    public ResponseEntity<List<Evento>> filtrarPorEstado(@PathVariable EstadoEvento estado) {
+    public ResponseEntity<List<EventoResponseDTO>> filtrarPorEstado(@PathVariable EstadoEvento estado) {
         return ResponseEntity.ok(eventoService.filtrarPorEstado(estado));
     }
 

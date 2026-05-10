@@ -82,13 +82,13 @@ public class EventoService {
     }
 
     @Transactional(readOnly = true)
-    public List<Evento> obtenerTodos() {
-        return eventoRepository.findAll();
+    public List<EventoResponseDTO> obtenerTodos() {
+        return convertirListaAResponse(eventoRepository.findAll());
     }
 
     @Transactional(readOnly = true)
-    public List<Evento> filtrarPorEstado(EstadoEvento estado) {
-        return eventoRepository.findByEstado(estado);
+    public List<EventoResponseDTO> filtrarPorEstado(EstadoEvento estado) {
+        return convertirListaAResponse(eventoRepository.findByEstado(estado));
     }
 
     @Transactional(readOnly = true)
@@ -124,6 +124,13 @@ public class EventoService {
     public Optional<EventoResponseDTO> obtenerPorId(Long id) {
         return eventoRepository.findById(id)
                 .map(this::convertirAResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public List<EventoResponseDTO> convertirListaAResponse(List<Evento> eventos) {
+        return eventos.stream()
+                .map(this::convertirAResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
