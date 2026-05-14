@@ -5,44 +5,43 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import agenda.model.Usuario;
-import agenda.repository.UsuarioRepository;
+import agenda.dto.CrearUsuarioRequest;
+import agenda.dto.UsuarioResponseDTO;
+import agenda.service.UsuarioService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /**
  * Controlador REST para gestionar usuarios.
  * 
- * Validaciones activas:
- * - @Valid activa automáticamente todas las validaciones del modelo Usuario
- * - Los errores de validación se capturan en GlobalExceptionHandler
- * - Respuestas HTTP: 201 Created (éxito), 400 Bad Request (validación fallida)
+ * Delegación al servicio de usuarios:
+ * - El controlador solo orquesta la petición HTTP
+ * - La lógica de negocio vive en UsuarioService
  */
 @RestController
 @RequestMapping("/api/usuarios")
 @RequiredArgsConstructor
 public class UsuarioController {
 
-    private final UsuarioRepository usuarioRepository;
+    private final UsuarioService usuarioService;
 
     /**
-     * Crea un nuevo usuario con validaciones automáticas.
+     * Crea un nuevo usuario.
      * 
-     * @Valid: Activa la validación de Jakarta Validation en el modelo Usuario
-     * 
-     * @param usuario Modelo Usuario (validado automáticamente)
-     * @return 201 Created con el usuario creado en caso de éxito
-     *         400 Bad Request si falla la validación
+     * @param request Datos del usuario a crear
+     * @return 201 Created con el usuario creado
      */
     @PostMapping
-    public ResponseEntity<Usuario> crearUsuario(@Valid @RequestBody Usuario usuario) {
-        Usuario creado = usuarioRepository.save(usuario);
+    public ResponseEntity<UsuarioResponseDTO> crearUsuario(@Valid @RequestBody CrearUsuarioRequest request) {
+        UsuarioResponseDTO creado = usuarioService.crearUsuario(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(creado);
     }
 
@@ -52,20 +51,44 @@ public class UsuarioController {
      * @return 200 OK con lista de usuarios
      */
     @GetMapping
-    public ResponseEntity<List<Usuario>> listarUsuarios() {
-        return ResponseEntity.ok(usuarioRepository.findAll());
+    public ResponseEntity<List<UsuarioResponseDTO>> listarUsuarios() {
+        return ResponseEntity.ok(usuarioService.obtenerTodos());
     }
 
     /**
-     * Busca un usuario por correo electrónico.
+     * Obtiene un usuario por id.
      * 
-     * @param email Correo del usuario
-     * @return 200 OK si existe, 404 Not Found si no existe
+     * @param id Identificador del usuario
+     * @return 200 OK con el usuario
      */
-    @GetMapping("/email/{email}")
-    public ResponseEntity<Usuario> buscarPorEmail(@PathVariable String email) {
-        return usuarioRepository.findByEmail(email)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    @GetMapping("/{id}")
+    public ResponseEntity<UsuarioResponseDTO> obtenerPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(usuarioService.obtenerPorId(id));
+    }
+
+    /**
+     * Actualiza un usuario existente.
+     * 
+     * @param id Identificador del usuario
+     * @param request Nuevos datos del usuario
+     * @return 200 OK con el usuario actualizado
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<UsuarioResponseDTO> actualizarUsuario(
+            @PathVariable Long id,
+            @Valid @RequestBody agenda.dto.ActualizarUsuarioRequest request) {
+        return ResponseEntity.ok(usuarioService.actualizarUsuario(id, request));
+    }
+
+    /**
+     * Elimina un usuario por id.
+     * 
+     * @param id Identificador del usuario
+     * @return 204 No Content si se elimina correctamente
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminarUsuario(@PathVariable Long id) {
+        usuarioService.eliminarUsuario(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -21,6 +21,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Entity
 @Table(name = "usuarios")
@@ -41,6 +43,12 @@ public class Usuario {
     @Column(nullable = false)
     private String nombre;
 
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @Column(nullable = false)
+    private String password;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Rol rol;
@@ -49,10 +57,12 @@ public class Usuario {
     private LocalDateTime fechaAlta;
 
     @JsonIgnore
+    @ToString.Exclude
     @OneToMany(mappedBy = "creador")
     private List<Evento> eventosCreados;
 
     @JsonIgnore
+    @ToString.Exclude
     @OneToMany(mappedBy = "aprobador")
     private List<Evento> eventosAprobados;
 
