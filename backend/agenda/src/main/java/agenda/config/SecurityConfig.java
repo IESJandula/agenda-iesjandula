@@ -49,8 +49,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/tipos/**", "/api/usuarios/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/tipos/**", "/api/usuarios/**").hasRole("ADMIN")
 
-                // PROFESORADO (and ADMIN) can create eventos
+                // PROFESORADO (and ADMIN) can create and update eventos
                 .requestMatchers(HttpMethod.POST, "/api/eventos").hasAnyRole("PROFESORADO", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/eventos/**").hasAnyRole("PROFESORADO", "ADMIN")
 
                 // any other request must be authenticated
                 .anyRequest().authenticated()

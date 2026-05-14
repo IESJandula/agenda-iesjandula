@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import agenda.dto.ActualizarEventoRequest;
 import agenda.dto.CrearEventoRequest;
 import agenda.dto.EventoResponseDTO;
 import agenda.enums.EstadoEvento;
@@ -81,7 +82,7 @@ public class EventoController {
     /**
      * Actualiza un evento con validaciones automáticas.
      * 
-     * @Valid: Activa la validación de Jakarta Validation en CrearEventoRequest
+     * @Valid: Activa la validación de Jakarta Validation en ActualizarEventoRequest
      * 
      * @param id ID del evento a actualizar
      * @param request DTO con nuevos datos (validado automáticamente)
@@ -91,7 +92,7 @@ public class EventoController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<EventoResponseDTO> actualizarEvento(@PathVariable Long id,
-            @Valid @RequestBody CrearEventoRequest request) {
+            @Valid @RequestBody ActualizarEventoRequest request) {
         EventoResponseDTO actualizado = eventoService.actualizarEvento(id, request);
         if (actualizado == null) {
             return ResponseEntity.notFound().build();

@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import agenda.dto.ActualizarEventoRequest;
 import agenda.dto.CrearEventoRequest;
 import agenda.dto.EventoResponseDTO;
 import agenda.enums.EstadoEvento;
@@ -110,7 +111,7 @@ public class EventoService {
      * @throws BusinessException Si hay violación de reglas de negocio
      */
     @Transactional
-    public EventoResponseDTO actualizarEvento(Long id, CrearEventoRequest request) {
+    public EventoResponseDTO actualizarEvento(Long id, ActualizarEventoRequest request) {
         log.info("Actualizando evento: id={}, titulo={}", id, request.getTitulo());
         
         // Validar que evento existe
