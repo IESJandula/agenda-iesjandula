@@ -1,16 +1,29 @@
 package agenda.service;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import agenda.dto.ActualizarEventoRequest;
 import agenda.dto.CrearEventoRequest;
 import agenda.dto.EventoResponseDTO;
+import agenda.dto.importacion.ImportarFestivoDTO;
+import agenda.dto.importacion.ImportarFestivoErrorDTO;
+import agenda.dto.importacion.ImportarFestivosPreviewResponseDTO;
 import agenda.enums.EstadoEvento;
 import agenda.exception.BusinessException;
 import agenda.exception.ResourceNotFoundException;
@@ -63,42 +76,91 @@ public class EventoService {
      */
     @Transactional
     public Evento crearEvento(CrearEventoRequest request) {
-        log.info("Creando evento: titulo={}, tipo={}, creador={}", 
-            request.getTitulo(), request.getTipoId(), request.getCreadorId());
-        
-        // Validar que título no sea vacío/nulo
-        validarTitulo(request.getTitulo());
-        
-        // Validar y obtener TipoEvento
-        TipoEvento tipo = validarYObtenerTipoEvento(request.getTipoId());
-        
-        // Validar y obtener Usuario creador
-        Usuario creador = validarYObtenerUsuario(request.getCreadorId());
-        
-        // Validar rango de fechas
-        validarRangoFechas(request.getFechaInicio(), request.getFechaFin());
-        
-        log.debug("Validaciones exitosas para evento: {}", request.getTitulo());
-        
-        Evento evento = Evento.builder()
-            .tipo(tipo)
-            .creador(creador)
-            .titulo(request.getTitulo())
-            .descripcion(request.getDescripcion())
-            .fechaInicio(request.getFechaInicio())
-            .fechaFin(request.getFechaFin())
-            .lugar(request.getLugar())
-            .gruposAfectados(request.getGruposAfectados())
-            .enlaceDocumento(request.getEnlaceDocumento())
-            .numAsistentes(request.getNumAsistentes())
-            .estado(request.getEstado())
-            .build();
+        return crearEventoConEstado(request, request.getEstado(), false, null);
+    }
 
-        Evento eventoPersistido = eventoRepository.save(evento);
-        log.info("Evento creado exitosamente: id={}, titulo={}", 
-            eventoPersistido.getId(), eventoPersistido.getTitulo());
-        
-        return eventoPersistido;
+    @Transactional
+    public Evento crearPropuestaEvento(CrearEventoRequest request) {
+        return crearEventoConEstado(request, EstadoEvento.PENDIENTE, true, null);
+    }
+
+    @Transactional(readOnly = true)
+    public ImportarFestivosPreviewResponseDTO previsualizarFestivos(MultipartFile archivo) {
+        validarArchivoCsv(archivo);
+
+        try {
+            String contenido = new String(archivo.getBytes(), StandardCharsets.UTF_8);
+            List<String> lineas = Arrays.asList(contenido.split("\\R"));
+
+            if (lineas.isEmpty()) {
+                throw new BusinessException("CSV_VACIO", "El archivo CSV está vacío");
+            }
+
+            validarCabecerasFestivos(lineas.get(0));
+
+            List<ImportarFestivoDTO> eventos = new ArrayList<>();
+            List<ImportarFestivoErrorDTO> errores = new ArrayList<>();
+
+            for (int indice = 1; indice < lineas.size(); indice++) {
+                String linea = lineas.get(indice).trim();
+                if (linea.isEmpty()) {
+                    continue;
+                }
+
+                try {
+                    eventos.add(parsearLineaFestivo(linea, indice + 1));
+                } catch (BusinessException ex) {
+                    errores.add(ImportarFestivoErrorDTO.builder()
+                            .linea(indice + 1)
+                            .mensaje(ex.getMessage())
+                            .build());
+                }
+            }
+
+            return ImportarFestivosPreviewResponseDTO.builder()
+                    .eventos(eventos)
+                    .errores(errores)
+                    .build();
+        } catch (IOException ex) {
+            throw new BusinessException("CSV_LECTURA_ERROR", "No se pudo leer el archivo CSV");
+        }
+    }
+
+    @Transactional
+    public List<EventoResponseDTO> confirmarImportacionFestivos(List<ImportarFestivoDTO> eventosImportados) {
+        if (eventosImportados == null || eventosImportados.isEmpty()) {
+            throw new BusinessException("IMPORTACION_VACIA", "No se enviaron festivos para importar");
+        }
+
+        TipoEvento tipoFestivo = obtenerTipoFestivo();
+        Usuario creador = obtenerUsuarioAutenticado()
+                .orElseThrow(() -> new BusinessException("USUARIO_AUTENTICADO_NO_ENCONTRADO",
+                        "No se pudo identificar al usuario autenticado para registrar la importación"));
+
+        List<EventoResponseDTO> importados = new ArrayList<>();
+
+        for (ImportarFestivoDTO festivo : eventosImportados) {
+            validarImportacionFestivo(festivo);
+
+            Evento evento = Evento.builder()
+                    .tipo(tipoFestivo)
+                    .creador(creador)
+                    .titulo(festivo.getTitulo().trim())
+                    .descripcion(festivo.getDescripcion())
+                    .fechaInicio(festivo.getFechaInicio().atStartOfDay())
+                    .fechaFin(festivo.getFechaFin().atTime(LocalTime.of(23, 59, 59)))
+                    .lugar("Festivo")
+                    .gruposAfectados("General")
+                    .enlaceDocumento(null)
+                    .numAsistentes(null)
+                    .estado(EstadoEvento.CONFIRMADO)
+                    .build();
+
+            Evento guardado = eventoRepository.save(evento);
+            importados.add(convertirAResponse(guardado));
+        }
+
+        return importados;
     }
 
     /**
@@ -169,6 +231,30 @@ public class EventoService {
         eventoRepository.deleteById(id);
         log.info("Evento eliminado exitosamente: id={}", id);
         return true;
+    }
+
+    @Transactional
+    public EventoResponseDTO aprobarEvento(Long id) {
+        Evento evento = eventoRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Evento", "id", id));
+
+        evento.setEstado(EstadoEvento.CONFIRMADO);
+        evento.setFechaAprobacion(LocalDateTime.now());
+        evento.setAprobador(obtenerUsuarioAutenticado().orElse(evento.getAprobador()));
+
+        return convertirAResponse(eventoRepository.save(evento));
+    }
+
+    @Transactional
+    public EventoResponseDTO rechazarEvento(Long id) {
+        Evento evento = eventoRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Evento", "id", id));
+
+        evento.setEstado(EstadoEvento.CANCELADO);
+        evento.setFechaAprobacion(LocalDateTime.now());
+        evento.setAprobador(obtenerUsuarioAutenticado().orElse(evento.getAprobador()));
+
+        return convertirAResponse(eventoRepository.save(evento));
     }
 
     @Transactional(readOnly = true)
@@ -348,6 +434,166 @@ public class EventoService {
         }
         
         log.debug("Validación exitosa: rango de fechas válido");
+    }
+
+    private Evento crearEventoConEstado(CrearEventoRequest request, EstadoEvento estado, boolean preferirUsuarioAutenticado, Long creadorIdFallback) {
+        log.info("Creando evento: titulo={}, tipo={}, estado={}", request.getTitulo(), request.getTipoId(), estado);
+
+        validarTitulo(request.getTitulo());
+
+        TipoEvento tipo = validarYObtenerTipoEvento(request.getTipoId());
+        Usuario creador = obtenerCreadorEvento(request, preferirUsuarioAutenticado, creadorIdFallback);
+        validarRangoFechas(request.getFechaInicio(), request.getFechaFin());
+
+        Evento evento = Evento.builder()
+            .tipo(tipo)
+            .creador(creador)
+            .titulo(request.getTitulo())
+            .descripcion(request.getDescripcion())
+            .fechaInicio(request.getFechaInicio())
+            .fechaFin(request.getFechaFin())
+            .lugar(request.getLugar())
+            .gruposAfectados(request.getGruposAfectados())
+            .enlaceDocumento(request.getEnlaceDocumento())
+            .numAsistentes(request.getNumAsistentes())
+            .estado(estado)
+            .build();
+
+        Evento eventoPersistido = eventoRepository.save(evento);
+        log.info("Evento creado exitosamente: id={}, titulo={}", eventoPersistido.getId(), eventoPersistido.getTitulo());
+
+        return eventoPersistido;
+    }
+
+    private Usuario obtenerCreadorEvento(CrearEventoRequest request, boolean preferirUsuarioAutenticado, Long creadorIdFallback) {
+        if (preferirUsuarioAutenticado) {
+            Optional<Usuario> usuarioAutenticado = obtenerUsuarioAutenticado();
+            if (usuarioAutenticado.isPresent()) {
+                return usuarioAutenticado.get();
+            }
+        }
+
+        Long creadorId = request.getCreadorId() != null ? request.getCreadorId() : creadorIdFallback;
+        if (creadorId == null) {
+            throw new BusinessException("CREADOR_OBLIGATORIO", "No se pudo determinar el creador del evento");
+        }
+
+        return validarYObtenerUsuario(creadorId);
+    }
+
+    private Optional<Usuario> obtenerUsuarioAutenticado() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Optional.empty();
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof UserDetails userDetails)) {
+            return Optional.empty();
+        }
+
+        return usuarioRepository.findByEmail(userDetails.getUsername());
+    }
+
+    private void validarArchivoCsv(MultipartFile archivo) {
+        if (archivo == null || archivo.isEmpty()) {
+            throw new BusinessException("CSV_VACIO", "Debes subir un archivo CSV válido");
+        }
+    }
+
+    private void validarCabecerasFestivos(String cabecera) {
+        String[] columnas = parsearCsvLine(cabecera, 1);
+        String[] esperadas = { "fecha_inicio", "fecha_fin", "titulo", "descripcion" };
+
+        if (columnas.length != esperadas.length) {
+            throw new BusinessException("CSV_COLUMNAS_INVALIDAS",
+                    "El CSV debe contener exactamente las columnas: fecha_inicio,fecha_fin,titulo,descripcion");
+        }
+
+        for (int indice = 0; indice < esperadas.length; indice++) {
+            if (!esperadas[indice].equalsIgnoreCase(columnas[indice].trim())) {
+                throw new BusinessException("CSV_COLUMNAS_INVALIDAS",
+                        "El CSV debe contener exactamente las columnas: fecha_inicio,fecha_fin,titulo,descripcion");
+            }
+        }
+    }
+
+    private ImportarFestivoDTO parsearLineaFestivo(String linea, int numeroLinea) {
+        String[] columnas = parsearCsvLine(linea, numeroLinea);
+
+        if (columnas.length != 4) {
+            throw new BusinessException("CSV_FILA_INVALIDA",
+                    String.format("La línea %d debe tener 4 columnas separadas por comas", numeroLinea));
+        }
+
+        LocalDate fechaInicio = parsearFecha(columnas[0].trim(), numeroLinea, "fecha_inicio");
+        LocalDate fechaFin = parsearFecha(columnas[1].trim(), numeroLinea, "fecha_fin");
+        String titulo = columnas[2].trim();
+        String descripcion = columnas[3].trim();
+
+        if (titulo.isEmpty()) {
+            throw new BusinessException("CSV_TITULO_OBLIGATORIO",
+                    String.format("La línea %d no contiene un título válido", numeroLinea));
+        }
+
+        if (fechaFin.isBefore(fechaInicio)) {
+            throw new BusinessException("CSV_FECHAS_INVALIDAS",
+                    String.format("La línea %d tiene una fecha_fin anterior a fecha_inicio", numeroLinea));
+        }
+
+        return ImportarFestivoDTO.builder()
+                .linea(numeroLinea)
+                .fechaInicio(fechaInicio)
+                .fechaFin(fechaFin)
+                .titulo(titulo)
+                .descripcion(descripcion.isEmpty() ? null : descripcion)
+                .build();
+    }
+
+    private String[] parsearCsvLine(String linea, int numeroLinea) {
+        if (linea == null) {
+            throw new BusinessException("CSV_FILA_INVALIDA",
+                    String.format("La línea %d está vacía o es inválida", numeroLinea));
+        }
+
+        return linea.split(",", -1);
+    }
+
+    private LocalDate parsearFecha(String valor, int numeroLinea, String campo) {
+        try {
+            return LocalDate.parse(valor);
+        } catch (Exception ex) {
+            throw new BusinessException("CSV_FECHA_INVALIDA",
+                    String.format("La línea %d tiene una fecha inválida en el campo %s", numeroLinea, campo));
+        }
+    }
+
+    private TipoEvento obtenerTipoFestivo() {
+        TipoEvento tipoFestivo = tipoEventoRepository.findByNombreIgnoreCase("Festivo")
+                .orElseThrow(() -> new BusinessException("TIPO_FESTIVO_NO_ENCONTRADO",
+                        "No existe un tipo de evento llamado Festivo"));
+
+        if (!tipoFestivo.isActivo()) {
+            throw new BusinessException("TIPO_FESTIVO_INACTIVO",
+                    "El tipo de evento Festivo existe pero está inactivo");
+        }
+
+        return tipoFestivo;
+    }
+
+    private void validarImportacionFestivo(ImportarFestivoDTO festivo) {
+        if (festivo == null) {
+            throw new BusinessException("FESTIVO_INVALIDO", "Se recibió un festivo inválido");
+        }
+
+        if (festivo.getFechaInicio() == null || festivo.getFechaFin() == null) {
+            throw new BusinessException("FESTIVO_INVALIDO", "Las fechas del festivo son obligatorias");
+        }
+
+        if (festivo.getTitulo() == null || festivo.getTitulo().trim().isEmpty()) {
+            throw new BusinessException("FESTIVO_INVALIDO", "El título del festivo es obligatorio");
+        }
     }
 
     /**

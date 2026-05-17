@@ -25,6 +25,88 @@ const routes = [
     },
   },
   {
+    path: '/pantalla/hoy-y-proximos',
+    name: 'pantalla-hoy-proximos',
+    component: () => import('../views/PantallaHoyProximosView.vue'),
+    meta: {
+      public: true,
+      title: 'Pantalla hoy y próximos',
+    },
+  },
+  {
+    path: '/pantalla/mes-actual',
+    name: 'pantalla-mes-actual',
+    component: () => import('../views/PantallaMesActualView.vue'),
+    meta: {
+      public: true,
+      title: 'Pantalla mes actual',
+    },
+  },
+  {
+    path: '/pantalla/curso',
+    name: 'pantalla-curso',
+    component: () => import('../views/PantallaCursoView.vue'),
+    meta: {
+      public: true,
+      title: 'Pantalla curso',
+    },
+  },
+  {
+    path: '/pantalla/proximo-evento',
+    name: 'pantalla-proximo-evento',
+    component: () => import('../views/PantallaProximoEventoView.vue'),
+    meta: {
+      public: true,
+      title: 'Pantalla próximo evento',
+    },
+  },
+  {
+    path: '/agenda',
+    name: 'agenda-proximos',
+    component: () => import('../views/AgendaProximosView.vue'),
+    meta: {
+      requiresAuth: true,
+      title: 'Agenda',
+    },
+  },
+  {
+    path: '/mis-propuestas',
+    name: 'mis-propuestas',
+    component: () => import('../views/MisPropuestasView.vue'),
+    meta: {
+      requiresAuth: true,
+      title: 'Mis propuestas',
+    },
+  },
+  {
+    path: '/admin/propuestas',
+    name: 'propuestas-admin',
+    component: () => import('../views/PropuestasAdminView.vue'),
+    meta: {
+      requiresAuth: true,
+      roles: ['ADMIN'],
+      title: 'Propuestas pendientes',
+    },
+  },
+  {
+    path: '/calendario/curso',
+    name: 'curso-completo',
+    component: () => import('../views/CursoCompletoView.vue'),
+    meta: {
+      requiresAuth: true,
+      title: 'Curso completo',
+    },
+  },
+  {
+    path: '/calendario/mes',
+    name: 'calendario-mes',
+    component: () => import('../views/CalendarioMensualView.vue'),
+    meta: {
+      requiresAuth: true,
+      title: 'Calendario mensual',
+    },
+  },
+  {
     path: '/eventos',
     name: 'eventos',
     component: () => import('../views/EventosView.vue'),
@@ -70,6 +152,16 @@ const routes = [
       requiresAuth: true,
       roles: ['ADMIN'],
       title: 'Usuarios',
+    },
+  },
+  {
+    path: '/admin/importar-festivos',
+    name: 'importar-festivos',
+    component: () => import('../views/ImportarFestivosView.vue'),
+    meta: {
+      requiresAuth: true,
+      roles: ['ADMIN'],
+      title: 'Importar festivos',
     },
   },
 ]

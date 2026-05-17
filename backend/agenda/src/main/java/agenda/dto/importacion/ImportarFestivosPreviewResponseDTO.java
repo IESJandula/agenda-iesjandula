@@ -1,0 +1,18 @@
+package agenda.dto.importacion;
+
+import java.util.List;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ImportarFestivosPreviewResponseDTO {
+
+    private List<ImportarFestivoDTO> eventos;
+    private List<ImportarFestivoErrorDTO> errores;
+}

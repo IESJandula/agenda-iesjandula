@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,10 +16,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 
 import agenda.dto.ActualizarEventoRequest;
 import agenda.dto.CrearEventoRequest;
 import agenda.dto.EventoResponseDTO;
+import agenda.dto.importacion.ImportarFestivosConfirmarRequestDTO;
+import agenda.dto.importacion.ImportarFestivosPreviewResponseDTO;
 import agenda.enums.EstadoEvento;
 import agenda.model.Evento;
 import agenda.service.EventoService;
@@ -54,6 +59,33 @@ public class EventoController {
         Evento creado = eventoService.crearEvento(request);
         EventoResponseDTO response = eventoService.convertirAResponse(creado);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * Crea una propuesta de evento en estado PENDIENTE.
+     *
+     * Si existe usuario autenticado, el servicio usa ese usuario como creador.
+     * Si no se puede resolver, se conserva el creadorId del DTO.
+     */
+    @PostMapping("/propuestas")
+    public ResponseEntity<EventoResponseDTO> crearPropuesta(@Valid @RequestBody CrearEventoRequest request) {
+        Evento creado = eventoService.crearPropuestaEvento(request);
+        EventoResponseDTO response = eventoService.convertirAResponse(creado);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping(value = "/importar-festivos/preview", consumes = "multipart/form-data")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ImportarFestivosPreviewResponseDTO> previsualizarFestivos(
+            @RequestPart("archivo") MultipartFile archivo) {
+        return ResponseEntity.ok(eventoService.previsualizarFestivos(archivo));
+    }
+
+    @PostMapping("/importar-festivos/confirmar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<EventoResponseDTO>> confirmarImportacionFestivos(
+            @Valid @RequestBody ImportarFestivosConfirmarRequestDTO request) {
+        return ResponseEntity.ok(eventoService.confirmarImportacionFestivos(request.getEventos()));
     }
 
     /**
@@ -114,6 +146,18 @@ public class EventoController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/aprobar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<EventoResponseDTO> aprobarEvento(@PathVariable Long id) {
+        return ResponseEntity.ok(eventoService.aprobarEvento(id));
+    }
+
+    @PutMapping("/{id}/rechazar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<EventoResponseDTO> rechazarEvento(@PathVariable Long id) {
+        return ResponseEntity.ok(eventoService.rechazarEvento(id));
     }
 
     /**

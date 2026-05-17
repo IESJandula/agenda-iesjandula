@@ -24,10 +24,16 @@ const router = useRouter()
 
 const navigation = computed(() => [
   { label: 'Dashboard', name: 'dashboard' },
+  { label: 'Agenda', name: 'agenda-proximos' },
+  { label: 'Curso', name: 'curso-completo' },
+  { label: 'Calendario', name: 'calendario-mes' },
+  { label: 'Mis propuestas', name: 'mis-propuestas', roles: ['PROFESORADO'] },
+  { label: 'Propuestas', name: 'propuestas-admin', roles: ['ADMIN'] },
+  { label: 'Importar festivos', name: 'importar-festivos', roles: ['ADMIN'] },
   { label: 'Eventos', name: 'eventos' },
   { label: 'Tipos', name: 'admin-tipos' },
   { label: 'Usuarios', name: 'admin-usuarios' },
-])
+].filter((item) => !item.roles || item.roles.includes(authStore.rol)))
 
 function handleLogout() {
   authStore.logout()
@@ -219,20 +225,29 @@ function handleLogout() {
 }
 
 .shell__logout {
-  margin: 0;
-  padding: 0 16px 20px;
-  border: none;
-  background: none;
-  color: var(--muted);
+  margin: 0 16px 20px;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  color: var(--text);
+  border-radius: 8px;
   cursor: pointer;
   font-size: 0.9rem;
-  font-weight: 500;
-  transition: color 0.2s ease;
-  text-align: left;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  text-align: center;
+  width: calc(100% - 32px);
 }
 
 .shell__logout:hover {
   color: var(--danger);
+  border-color: var(--danger);
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.shell__logout:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .shell__main {

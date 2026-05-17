@@ -1,19 +1,53 @@
-version: '3.8'
-
 services:
   mysql:
-    image: mysql:8.0-oraclelinux9
+    image: mysql:8.0
     container_name: agenda_mysql
-    restart: always
+    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-toor}
       MYSQL_DATABASE: agenda_db
-      MYSQL_USER: root
-      MYSQL_PASSWORD: toor
     ports:
-      - "3306:3306"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  backend:
+    build:
+      context: ./backend/agenda
+      dockerfile: Dockerfile
+    container_name: agenda_backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-agenda_db}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-toor}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-clave-super-secreta-agenda-ies-jandula-cambia-esta-clave-en-produccion}
+      SECURITY_JWT_EXPIRATION_MS: ${SECURITY_JWT_EXPIRATION_MS:-86400000}
+      APP_TV_TOKEN: ${APP_TV_TOKEN:-cambia-este-token-tv}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+
+  frontend:
+    build:
+      context: ./frontend/frontend
+      dockerfile: Dockerfile
+    container_name: agenda_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
 
 volumes:
   mysql_data:

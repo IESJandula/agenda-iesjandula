@@ -41,6 +41,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // public endpoints
                 .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/tv/validate").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/eventos", "/api/eventos/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/tipos", "/api/tipos/**").permitAll()
 
@@ -48,6 +49,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/tipos/**", "/api/usuarios/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/tipos/**", "/api/usuarios/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/tipos/**", "/api/usuarios/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/eventos/importar-festivos/**").hasRole("ADMIN")
 
                 // PROFESORADO (and ADMIN) can create and update eventos
                 .requestMatchers(HttpMethod.POST, "/api/eventos").hasAnyRole("PROFESORADO", "ADMIN")
