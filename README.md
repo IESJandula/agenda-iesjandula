@@ -259,7 +259,7 @@ docker-compose up -d
 
 # 📚 Autor
 
-**Cristina Mangue Mitogo Mangue**
+**Filotea Mangue Mitogo Mangue**
 
 Proyecto Final de Desarrollo de Aplicaciones Web (DAW)
 
