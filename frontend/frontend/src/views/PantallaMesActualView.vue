@@ -28,6 +28,12 @@ async function loadData() {
     eventos.value = data.eventos.map((evento) => normalizeEvento(evento, tipoMap.value))
     error.value = data.eventosError
   } catch (requestError) {
+    console.error('[PantallaMesActualView] loadData failed', {
+      message: requestError?.message,
+      responseStatus: requestError?.response?.status,
+      responseData: requestError?.response?.data,
+      stack: requestError?.stack,
+    })
     error.value = requestError?.response?.data?.message || 'No se pudieron cargar los eventos.'
     eventos.value = []
   } finally {
@@ -90,7 +96,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="tv-screen tv-screen--month">
+  <main class="tv-page tv-screen tv-screen--month">
     <header class="tv-header">
       <div>
         <p class="tv-eyebrow">Agenda escolar</p>
@@ -132,13 +138,36 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.tv-page {
+  position: relative;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 48px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(97, 214, 167, 0.7) transparent;
+}
+
+.tv-page::-webkit-scrollbar {
+  width: 10px;
+}
+
+.tv-page::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tv-page::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(97, 214, 167, 0.7);
+}
+
 .tv-screen {
-  position: fixed;
-  inset: 0;
+  position: relative;
   padding: 32px;
   background: linear-gradient(180deg, #f7fcfa 0%, #eefaf4 100%);
   color: #0f172a;
-  overflow: hidden;
+  overflow: visible;
   font-size: 32px;
 }
 
@@ -161,7 +190,7 @@ onBeforeUnmount(() => {
 
 .tv-header h1 {
   margin: 0;
-  font-size: clamp(3rem, 3vw, 5rem);
+  font-size: clamp(3.75rem, 4vw, 5.75rem);
   line-height: 1;
 }
 
@@ -177,7 +206,7 @@ onBeforeUnmount(() => {
 }
 
 .tv-calendar-card {
-  height: calc(100vh - 170px);
+  min-height: calc(100vh - 170px);
   background: rgba(255, 255, 255, 0.9);
   border-radius: 28px;
   border: 2px solid rgba(15, 118, 110, 0.12);
@@ -290,7 +319,7 @@ onBeforeUnmount(() => {
   }
 
   .tv-calendar-card {
-    height: auto;
+    min-height: auto;
   }
 }
 </style>

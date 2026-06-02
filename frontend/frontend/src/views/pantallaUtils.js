@@ -141,6 +141,24 @@ export function sortByDateAndPriority(a, b) {
   return a.titulo.localeCompare(b.titulo, 'es', { sensitivity: 'base' })
 }
 
+export function sortByPriorityAndHour(a, b) {
+  const priorityA = a.tipoPrioridad ?? Number.MAX_SAFE_INTEGER
+  const priorityB = b.tipoPrioridad ?? Number.MAX_SAFE_INTEGER
+
+  if (priorityA !== priorityB) {
+    return priorityA - priorityB
+  }
+
+  const timeA = a.fechaInicioDate?.getTime() ?? 0
+  const timeB = b.fechaInicioDate?.getTime() ?? 0
+
+  if (timeA !== timeB) {
+    return timeA - timeB
+  }
+
+  return a.titulo.localeCompare(b.titulo, 'es', { sensitivity: 'base' })
+}
+
 export async function loadScreenData() {
   const [eventosResult, tiposResult] = await Promise.allSettled([getEventos(), getTipos()])
 
@@ -193,7 +211,7 @@ export function normalizeEvento(evento, tipoMap) {
   }
 }
 
-export function buildDailyGroups(eventos) {
+export function buildDailyGroups(eventos, comparator = sortByDateAndPriority) {
   const grouped = new Map()
 
   for (const evento of eventos) {
@@ -207,7 +225,7 @@ export function buildDailyGroups(eventos) {
   }
 
   for (const items of grouped.values()) {
-    items.sort(sortByDateAndPriority)
+    items.sort(comparator)
   }
 
   return grouped
@@ -224,7 +242,7 @@ export function buildMonthDays(monthDate, eventsByDay) {
   for (let index = 0; index < 42; index += 1) {
     const date = addDays(calendarStart, index)
     const key = formatDayKey(date)
-    const dayEvents = [...(eventsByDay.get(key) ?? [])].sort(sortByDateAndPriority)
+    const dayEvents = [...(eventsByDay.get(key) ?? [])].sort(sortByPriorityAndHour)
 
     days.push({
       date,
@@ -245,4 +263,15 @@ export function buildCourseMonths(referenceDate = new Date()) {
   const courseStartYear = referenceDate.getMonth() >= 8 ? referenceDate.getFullYear() : referenceDate.getFullYear() - 1
 
   return Array.from({ length: 10 }, (_, index) => new Date(courseStartYear, 8 + index, 1))
+}
+
+export function isFestivoEvento(evento) {
+  return String(evento?.tipoNombre ?? '').trim().toLowerCase() === 'festivo'
+}
+
+export function getUpcomingFestivos(eventos, referenceDate = new Date(), limit = 3) {
+  return (Array.isArray(eventos) ? eventos : [])
+    .filter((evento) => isFestivoEvento(evento) && evento.fechaInicioDate && evento.fechaInicioDate >= referenceDate)
+    .sort(sortByPriorityAndHour)
+    .slice(0, limit)
 }

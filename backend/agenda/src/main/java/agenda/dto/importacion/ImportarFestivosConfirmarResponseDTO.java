@@ -17,4 +17,6 @@ public class ImportarFestivosConfirmarResponseDTO {
     private List<EventoResponseDTO> eventos;
     private int importados;
     private int omitidosDuplicados;
+    private int omitidosPorDuplicado;
+    private List<ImportarFestivoErrorDTO> errores;
 }

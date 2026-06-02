@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
-import { createTipoMap, formatHour, formatLongDate, loadScreenData, normalizeEvento, normalizeHexColor, sortByDateAndPriority, statusClass, statusLabel, getTvTokenFromRoute, validateTvToken } from './pantallaUtils'
+import { createTipoMap, formatHour, formatLongDate, loadScreenData, normalizeEvento, normalizeHexColor, sortByPriorityAndHour, getTvTokenFromRoute, validateTvToken } from './pantallaUtils'
 
 const loading = ref(true)
 const error = ref('')
@@ -28,6 +28,12 @@ async function loadData() {
     eventos.value = data.eventos.map((evento) => normalizeEvento(evento, tipoMap.value))
     error.value = data.eventosError
   } catch (requestError) {
+    console.error('[PantallaProximoEventoView] loadData failed', {
+      message: requestError?.message,
+      responseStatus: requestError?.response?.status,
+      responseData: requestError?.response?.data,
+      stack: requestError?.stack,
+    })
     error.value = requestError?.response?.data?.message || 'No se pudieron cargar los eventos.'
     eventos.value = []
   } finally {
@@ -36,9 +42,8 @@ async function loadData() {
   }
 }
 
-const nextEvent = computed(() => eventos.value.filter((evento) => evento.fechaInicioDate && evento.fechaInicioDate >= now.value).sort(sortByDateAndPriority)[0] ?? null)
-
-const nextEvents = computed(() => eventos.value.filter((evento) => evento.fechaInicioDate && evento.fechaInicioDate >= now.value).sort(sortByDateAndPriority).slice(1, 6))
+const nextEvent = computed(() => eventos.value.filter((evento) => evento.fechaInicioDate && evento.fechaInicioDate >= now.value).sort(sortByPriorityAndHour)[0] ?? null)
+const nextEvents = computed(() => eventos.value.filter((evento) => evento.fechaInicioDate && evento.fechaInicioDate >= now.value).sort(sortByPriorityAndHour).slice(1, 6))
 
 function itemStyle(evento) {
   const color = normalizeHexColor(evento.tipoColor) || '#61d6a7'
@@ -61,7 +66,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="tv-screen tv-screen--next">
+  <main class="tv-page tv-screen tv-screen--next">
     <header class="tv-header">
       <div>
         <p class="tv-eyebrow">Agenda escolar</p>
@@ -77,26 +82,33 @@ onBeforeUnmount(() => {
       <p>Cargando evento próximo...</p>
     </section>
 
-    <section v-else>
+    <section v-else class="tv-content">
       <article v-if="nextEvent" class="tv-feature">
         <div class="tv-feature__main" :style="itemStyle(nextEvent)">
           <p class="tv-feature__label">Siguiente evento relevante</p>
           <h2>{{ nextEvent.titulo }}</h2>
-          <p class="tv-feature__meta">{{ nextEvent.tipoNombre }}</p>
-          <p class="tv-feature__meta">{{ formatLongDate(nextEvent.fechaInicioDate) }}</p>
-          <p class="tv-feature__meta">{{ formatHour(nextEvent.fechaInicioDate) }} · {{ nextEvent.lugar }}</p>
+          <div class="tv-feature__details">
+            <p class="tv-feature__meta"><strong>Tipo:</strong> {{ nextEvent.tipoNombre }}</p>
+            <p class="tv-feature__meta"><strong>Fecha:</strong> {{ formatLongDate(nextEvent.fechaInicioDate) }}</p>
+            <p class="tv-feature__meta"><strong>Hora:</strong> {{ formatHour(nextEvent.fechaInicioDate) }}</p>
+            <p class="tv-feature__meta"><strong>Lugar:</strong> {{ nextEvent.lugar }}</p>
+          </div>
         </div>
-        <aside class="tv-feature__status-wrap">
-          <span class="tv-status tv-status--big" :class="statusClass(nextEvent.estado, 'tv-status')">{{ statusLabel(nextEvent.estado) }}</span>
-        </aside>
       </article>
 
-      <div v-if="nextEvents.length > 0" class="tv-next-list">
-        <article v-for="evento in nextEvents" :key="evento.id" class="tv-next-item" :style="itemStyle(evento)">
-          <strong>{{ evento.titulo }}</strong>
-          <span>{{ formatLongDate(evento.fechaInicioDate) }} · {{ formatHour(evento.fechaInicioDate) }} · {{ evento.lugar }}</span>
-        </article>
-      </div>
+      <section v-if="nextEvents.length > 0" class="tv-secondary-block">
+        <div class="tv-secondary-block__header">
+          <p class="tv-feature__label">Próximos eventos</p>
+          <span class="tv-secondary-block__count">{{ nextEvents.length }} disponibles</span>
+        </div>
+
+        <div class="tv-next-list">
+          <article v-for="evento in nextEvents" :key="evento.id" class="tv-next-item" :style="itemStyle(evento)">
+            <strong>{{ evento.titulo }}</strong>
+            <span>{{ formatLongDate(evento.fechaInicioDate) }} · {{ formatHour(evento.fechaInicioDate) }} · {{ evento.lugar }}</span>
+          </article>
+        </div>
+      </section>
 
       <div v-else-if="!nextEvent" class="tv-empty tv-empty--big">
         <p>No hay eventos próximos.</p>
@@ -108,13 +120,36 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.tv-page {
+  position: relative;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 48px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(97, 214, 167, 0.7) transparent;
+}
+
+.tv-page::-webkit-scrollbar {
+  width: 10px;
+}
+
+.tv-page::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tv-page::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(97, 214, 167, 0.7);
+}
+
 .tv-screen {
-  position: fixed;
-  inset: 0;
+  position: relative;
   padding: 32px;
   background: linear-gradient(180deg, #f7fcfa 0%, #eefaf4 100%);
   color: #0f172a;
-  overflow: hidden;
+  overflow: visible;
   font-size: 32px;
 }
 
@@ -137,7 +172,7 @@ onBeforeUnmount(() => {
 
 .tv-header h1 {
   margin: 0;
-  font-size: clamp(3rem, 3vw, 5rem);
+  font-size: clamp(3.75rem, 4vw, 5.75rem);
   line-height: 1;
 }
 
@@ -152,21 +187,24 @@ onBeforeUnmount(() => {
   font-size: 1.5rem;
 }
 
-.tv-feature {
-  height: calc(100vh - 280px);
+.tv-content {
   display: grid;
-  grid-template-columns: 1.5fr 0.5fr;
-  gap: 24px;
+  gap: 18px;
+  align-content: start;
+}
+
+.tv-feature {
+  min-height: 0;
 }
 
 .tv-feature__main {
   background: rgba(255, 255, 255, 0.92);
   border-radius: 32px;
   border: 4px solid #61d6a7;
-  padding: 36px;
+  padding: 26px 28px;
   display: grid;
-  align-content: center;
-  gap: 18px;
+  align-content: start;
+  gap: 16px;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
 }
 
@@ -181,47 +219,72 @@ onBeforeUnmount(() => {
 
 .tv-feature__main h2 {
   margin: 0;
-  font-size: clamp(3.4rem, 4vw, 6.5rem);
+  font-size: clamp(2.8rem, 3.4vw, 4.8rem);
   line-height: 1;
+}
+
+.tv-feature__details {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: start;
 }
 
 .tv-feature__meta {
   margin: 0;
-  font-size: 1.6rem;
+  font-size: 1.1rem;
+  line-height: 1.45;
   color: #334155;
 }
 
-.tv-feature__status-wrap {
-  display: grid;
-  place-items: center;
+.tv-feature__meta strong {
+  color: #0f172a;
 }
 
-.tv-status--big {
-  font-size: 1.5rem;
-  padding: 1rem 1.4rem;
-}
-
-.tv-next-list {
-  margin-top: 24px;
+.tv-secondary-block {
   display: grid;
   gap: 14px;
 }
 
+.tv-secondary-block__header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.tv-secondary-block__count {
+  color: #0f766e;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tv-next-list {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  align-items: start;
+}
+
 .tv-next-item {
-  padding: 16px 20px;
-  border-radius: 22px;
+  padding: 14px 16px;
+  border-radius: 18px;
   border: 2px solid transparent;
   background: rgba(255, 255, 255, 0.88);
   display: grid;
-  gap: 6px;
+  gap: 5px;
+  align-content: start;
 }
 
 .tv-next-item strong {
-  font-size: 1.5rem;
+  font-size: 1.15rem;
+  line-height: 1.15;
 }
 
 .tv-next-item span {
-  font-size: 1.05rem;
+  font-size: 0.92rem;
   color: #334155;
 }
 
@@ -263,9 +326,12 @@ onBeforeUnmount(() => {
     font-size: 28px;
   }
 
-  .tv-feature {
+  .tv-feature__details {
     grid-template-columns: 1fr;
-    height: auto;
+  }
+
+  .tv-next-list {
+    grid-template-columns: 1fr;
   }
 }
 </style>

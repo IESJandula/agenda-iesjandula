@@ -37,6 +37,72 @@ body {
   background: var(--bg);
 }
 
+.tv-screen {
+  isolation: isolate;
+}
+
+.tv-page {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(97, 214, 167, 0.7) transparent;
+}
+
+.tv-page::-webkit-scrollbar {
+  width: 10px;
+}
+
+.tv-page::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tv-page::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(97, 214, 167, 0.7);
+}
+
+.tv-screen::before {
+  content: '';
+  position: absolute;
+  inset: -2%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.16), transparent 24%),
+    radial-gradient(circle at 80% 75%, rgba(97, 214, 167, 0.12), transparent 22%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
+  opacity: 0.65;
+  transform: translate3d(0, 0, 0);
+  animation: tv-burnin-drift 30s ease-in-out infinite alternate;
+  z-index: 0;
+}
+
+.tv-screen > * {
+  position: relative;
+  z-index: 1;
+}
+
+.tv-screen {
+  font-size: 32px;
+}
+
+.tv-screen h1 {
+  font-size: clamp(3.75rem, 4vw, 5.75rem);
+}
+
+.tv-screen h2 {
+  font-size: clamp(2.25rem, 2.6vw, 4rem);
+}
+
+@keyframes tv-burnin-drift {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.6;
+  }
+
+  100% {
+    transform: translate3d(0.7%, 0.4%, 0);
+    opacity: 0.8;
+  }
+}
+
 a {
   color: inherit;
   text-decoration: none;

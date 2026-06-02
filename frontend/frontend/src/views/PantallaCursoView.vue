@@ -28,6 +28,12 @@ async function loadData() {
     eventos.value = data.eventos.map((evento) => normalizeEvento(evento, tipoMap.value))
     error.value = data.eventosError
   } catch (requestError) {
+    console.error('[PantallaCursoView] loadData failed', {
+      message: requestError?.message,
+      responseStatus: requestError?.response?.status,
+      responseData: requestError?.response?.data,
+      stack: requestError?.stack,
+    })
     error.value = requestError?.response?.data?.message || 'No se pudieron cargar los eventos.'
     eventos.value = []
   } finally {
@@ -165,7 +171,7 @@ onBeforeUnmount(() => {
 
 .tv-header h1 {
   margin: 0;
-  font-size: clamp(3rem, 3vw, 5rem);
+  font-size: clamp(3.75rem, 4vw, 5.75rem);
   line-height: 1;
 }
 

@@ -7,10 +7,12 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.web.multipart.MultipartFile;
@@ -136,6 +138,9 @@ public class EventoService {
                     .eventos(eventos)
                     .errores(errores)
                     .advertencias(advertencias)
+                    .validos(eventos.size())
+                    .duplicados(advertencias.size())
+                    .totalErrores(errores.size())
                     .build();
         } catch (IOException ex) {
             throw new BusinessException("CSV_LECTURA_ERROR", "No se pudo leer el archivo CSV");
@@ -144,7 +149,7 @@ public class EventoService {
 
     @Transactional
     public ImportarFestivosConfirmarResponseDTO confirmarImportacionFestivos(List<ImportarFestivoDTO> eventosImportados) {
-        if (eventosImportados == null || eventosImportados.isEmpty()) {
+        if (eventosImportados == null) {
             throw new BusinessException("IMPORTACION_VACIA", "No se enviaron festivos para importar");
         }
 
@@ -155,40 +160,53 @@ public class EventoService {
 
         List<EventoResponseDTO> importados = new ArrayList<>();
         int omitidosDuplicados = 0;
-        List<String> clavesProcesadas = new ArrayList<>();
+        List<ImportarFestivoErrorDTO> errores = new ArrayList<>();
+        Set<String> clavesProcesadas = new HashSet<>();
 
         for (ImportarFestivoDTO festivo : eventosImportados) {
-            validarImportacionFestivo(festivo);
+            Integer linea = festivo != null ? festivo.getLinea() : null;
+            try {
+                validarImportacionFestivo(festivo);
 
-            if (esFestivoDuplicado(festivo) || clavesProcesadas.contains(claveFestivo(festivo))) {
-                omitidosDuplicados++;
-                continue;
+                String clave = claveFestivo(festivo);
+                if (esFestivoDuplicado(festivo) || clavesProcesadas.contains(clave)) {
+                    omitidosDuplicados++;
+                    continue;
+                }
+
+                clavesProcesadas.add(clave);
+                String tituloNormalizado = festivo.getTitulo() == null ? "" : festivo.getTitulo().trim();
+
+                Evento evento = Evento.builder()
+                        .tipo(tipoFestivo)
+                        .creador(creador)
+                    .titulo(tituloNormalizado)
+                        .descripcion(festivo.getDescripcion())
+                        .fechaInicio(festivo.getFechaInicio().atStartOfDay())
+                        .fechaFin(festivo.getFechaFin().atTime(LocalTime.of(23, 59, 59)))
+                        .lugar("Festivo")
+                        .gruposAfectados("General")
+                        .enlaceDocumento(null)
+                        .numAsistentes(null)
+                        .estado(EstadoEvento.CONFIRMADO)
+                        .build();
+
+                Evento guardado = eventoRepository.save(evento);
+                importados.add(convertirAResponse(guardado));
+            } catch (BusinessException ex) {
+                errores.add(ImportarFestivoErrorDTO.builder()
+                        .linea(linea)
+                        .mensaje(ex.getMessage())
+                        .build());
             }
-
-            clavesProcesadas.add(claveFestivo(festivo));
-
-            Evento evento = Evento.builder()
-                    .tipo(tipoFestivo)
-                    .creador(creador)
-                    .titulo(festivo.getTitulo().trim())
-                    .descripcion(festivo.getDescripcion())
-                    .fechaInicio(festivo.getFechaInicio().atStartOfDay())
-                    .fechaFin(festivo.getFechaFin().atTime(LocalTime.of(23, 59, 59)))
-                    .lugar("Festivo")
-                    .gruposAfectados("General")
-                    .enlaceDocumento(null)
-                    .numAsistentes(null)
-                    .estado(EstadoEvento.CONFIRMADO)
-                    .build();
-
-            Evento guardado = eventoRepository.save(evento);
-            importados.add(convertirAResponse(guardado));
         }
 
         return ImportarFestivosConfirmarResponseDTO.builder()
                 .eventos(importados)
                 .importados(importados.size())
                 .omitidosDuplicados(omitidosDuplicados)
+                .omitidosPorDuplicado(omitidosDuplicados)
+                .errores(errores)
                 .build();
     }
 

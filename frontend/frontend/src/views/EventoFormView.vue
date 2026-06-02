@@ -17,6 +17,7 @@ const isEditMode = computed(() => Boolean(editingId.value))
 const form = reactive({
   tipoId: '',
   creadorId: '',
+  responsablesIds: [],
   titulo: '',
   descripcion: '',
   fechaInicio: '',
@@ -81,6 +82,7 @@ function fromBackendDateTime(value) {
 function patchFormWithEvento(evento) {
   form.tipoId = evento?.tipoId != null ? String(evento.tipoId) : ''
   form.creadorId = evento?.creadorId != null ? String(evento.creadorId) : ''
+  form.responsablesIds = extractResponsablesIds(evento)
   form.titulo = evento?.titulo ?? ''
   form.descripcion = evento?.descripcion ?? ''
   form.fechaInicio = fromBackendDateTime(evento?.fechaInicio)
@@ -95,10 +97,26 @@ function patchFormWithEvento(evento) {
   form.estado = evento?.estado ?? 'PENDIENTE'
 }
 
+function extractResponsablesIds(evento) {
+  if (Array.isArray(evento?.responsablesIds)) {
+    return evento.responsablesIds.filter((id) => id != null).map((id) => String(id))
+  }
+
+  if (Array.isArray(evento?.responsables)) {
+    return evento.responsables
+      .map((responsable) => responsable?.id)
+      .filter((id) => id != null)
+      .map((id) => String(id))
+  }
+
+  return []
+}
+
 function toPayload() {
   return {
     tipoId: Number(form.tipoId),
     creadorId: Number(form.creadorId),
+    responsablesIds: form.responsablesIds.map((id) => Number(id)),
     titulo: form.titulo.trim(),
     descripcion: form.descripcion.trim() || null,
     fechaInicio: toLocalDateTime(form.fechaInicio),
@@ -227,6 +245,17 @@ onMounted(async () => {
         </label>
 
         <label class="evento-form__field evento-form__field--full">
+          <span>Responsables</span>
+          <select v-model="form.responsablesIds" class="select evento-form__multiselect" multiple size="6">
+            <option v-for="usuario in usuarios" :key="usuario.id" :value="String(usuario.id)">
+              {{ usuario.nombre }} ({{ usuario.email }})
+            </option>
+          </select>
+          <small class="evento-form__hint">Mantén pulsado Ctrl o Cmd para seleccionar varios usuarios. Puedes dejarlo vacío.</small>
+          <small v-if="fieldErrors.responsablesIds" class="evento-form__field-error">{{ fieldErrors.responsablesIds }}</small>
+        </label>
+
+        <label class="evento-form__field evento-form__field--full">
           <span>Título *</span>
           <input v-model="form.titulo" class="input" type="text" maxlength="100" required />
           <small v-if="fieldErrors.titulo" class="evento-form__field-error">{{ fieldErrors.titulo }}</small>
@@ -349,6 +378,16 @@ onMounted(async () => {
 .evento-form__field-error {
   color: #dc2626;
   font-size: 0.85rem;
+}
+
+.evento-form__hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.evento-form__multiselect {
+  min-height: 180px;
 }
 
 .evento-form__actions {

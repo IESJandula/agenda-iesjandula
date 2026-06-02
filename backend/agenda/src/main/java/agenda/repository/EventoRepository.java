@@ -17,10 +17,10 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
     @Query("""
         SELECT CASE WHEN COUNT(e) > 0 THEN true ELSE false END
         FROM Evento e
-        WHERE LOWER(e.titulo) = LOWER(:titulo)
+        WHERE LOWER(TRIM(e.titulo)) = LOWER(TRIM(:titulo))
           AND e.fechaInicio = :fechaInicio
           AND e.fechaFin = :fechaFin
-          AND LOWER(e.tipo.nombre) = LOWER(:tipoNombre)
+          AND LOWER(TRIM(e.tipo.nombre)) = LOWER(TRIM(:tipoNombre))
         """)
     boolean existsFestivoDuplicado(
             @Param("titulo") String titulo,

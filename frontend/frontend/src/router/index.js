@@ -164,6 +164,16 @@ const routes = [
       title: 'Importar festivos',
     },
   },
+  {
+    path: '/admin/pantallas-tv',
+    name: 'pantallas-tv',
+    component: () => import('../views/PantallasTvView.vue'),
+    meta: {
+      requiresAuth: true,
+      roles: ['ADMIN'],
+      title: 'Pantallas TV',
+    },
+  },
 ]
 
 const router = createRouter({

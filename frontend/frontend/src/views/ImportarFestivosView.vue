@@ -17,7 +17,12 @@ const previewErrores = computed(() => (Array.isArray(preview.value?.errores) ? p
 const previewAdvertencias = computed(() => (Array.isArray(preview.value?.advertencias) ? preview.value.advertencias : []))
 const hasPreview = computed(() => Boolean(preview.value))
 const hasErrors = computed(() => previewErrores.value.length > 0)
-const canConfirm = computed(() => hasPreview.value && !hasErrors.value && !loadingConfirm.value)
+const previewValidos = computed(() => Number(preview.value?.validos ?? previewEventos.value.length ?? 0))
+const previewDuplicados = computed(() => Number(preview.value?.duplicados ?? previewAdvertencias.value.length ?? 0))
+const previewTotalErrores = computed(() => Number(preview.value?.totalErrores ?? previewErrores.value.length ?? 0))
+const canConfirm = computed(
+  () => hasPreview.value && !hasErrors.value && previewEventos.value.length > 0 && !loadingConfirm.value,
+)
 
 function handleFileChange(event) {
   selectedFile.value = event.target.files?.[0] ?? null
@@ -26,11 +31,14 @@ function handleFileChange(event) {
   preview.value = null
 }
 
-function resetState() {
+function resetState(clearFeedback = true) {
   selectedFile.value = null
   preview.value = null
-  formError.value = ''
-  successMessage.value = ''
+
+  if (clearFeedback) {
+    formError.value = ''
+    successMessage.value = ''
+  }
 
   if (fileInput.value) {
     fileInput.value.value = ''
@@ -55,6 +63,9 @@ async function handlePreview() {
       eventos: Array.isArray(response?.eventos) ? response.eventos : [],
       errores: Array.isArray(response?.errores) ? response.errores : [],
       advertencias: Array.isArray(response?.advertencias) ? response.advertencias : [],
+      validos: Number(response?.validos ?? 0),
+      duplicados: Number(response?.duplicados ?? 0),
+      totalErrores: Number(response?.totalErrores ?? 0),
     }
   } catch (requestError) {
     preview.value = null
@@ -76,9 +87,19 @@ async function handleConfirm() {
   try {
     const resultado = await confirmarImportarFestivos({ eventos: previewEventos.value })
     const importados = Number(resultado?.importados ?? resultado?.eventos?.length ?? 0)
-    const omitidosDuplicados = Number(resultado?.omitidosDuplicados ?? 0)
-    successMessage.value = `Importación completada: ${importados} festivos creados correctamente${omitidosDuplicados > 0 ? `, ${omitidosDuplicados} omitidos por duplicado` : ''}.`
-    resetState()
+    const omitidosDuplicados = Number(resultado?.omitidosPorDuplicado ?? resultado?.omitidosDuplicados ?? 0)
+    const erroresConfirmacion = Array.isArray(resultado?.errores) ? resultado.errores : []
+    const totalErrores = erroresConfirmacion.length
+    successMessage.value = `Importación completada: ${importados} festivos creados correctamente${omitidosDuplicados > 0 ? `, ${omitidosDuplicados} omitidos por duplicado` : ''}${totalErrores > 0 ? `, ${totalErrores} con error` : ''}.`
+
+    if (totalErrores > 0) {
+      const detalleErrores = erroresConfirmacion
+        .map((error) => `Línea ${error?.linea ?? '-'}: ${error?.mensaje ?? 'Error desconocido'}`)
+        .join(' | ')
+      formError.value = `Se detectaron errores durante la confirmación: ${detalleErrores}`
+    }
+
+    resetState(false)
   } catch (requestError) {
     formError.value = requestError?.response?.data?.message || 'No se pudo confirmar la importación.'
   } finally {
@@ -137,8 +158,12 @@ function formatDate(value) {
       <div v-if="preview" class="import-festivos__preview">
         <div class="import-festivos__preview-header">
           <h3>Preview de eventos</h3>
-          <span class="import-festivos__badge">{{ previewEventos.length }} válidos</span>
+          <span class="import-festivos__badge">{{ previewValidos }} válidos</span>
         </div>
+
+        <p class="import-festivos__summary">
+          Resumen: {{ previewValidos }} válidos, {{ previewDuplicados }} duplicados, {{ previewTotalErrores }} errores.
+        </p>
 
         <p v-if="hasErrors" class="import-festivos__warning">
           Hay errores en el CSV. Corrígelo antes de confirmar la importación.
@@ -225,6 +250,11 @@ function formatDate(value) {
   margin: 0;
   padding: 12px 14px;
   border-radius: 8px;
+}
+
+.import-festivos__summary {
+  margin: 0;
+  color: var(--muted);
 }
 
 .import-festivos__error {

@@ -30,6 +30,7 @@ const navigation = computed(() => [
   { label: 'Mis propuestas', name: 'mis-propuestas', roles: ['PROFESORADO'] },
   { label: 'Propuestas', name: 'propuestas-admin', roles: ['ADMIN'] },
   { label: 'Importar festivos', name: 'importar-festivos', roles: ['ADMIN'] },
+  { label: 'Pantallas TV', name: 'pantallas-tv', roles: ['ADMIN'] },
   { label: 'Eventos', name: 'eventos' },
   { label: 'Tipos', name: 'admin-tipos' },
   { label: 'Usuarios', name: 'admin-usuarios' },

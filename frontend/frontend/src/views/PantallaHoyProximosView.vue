@@ -2,7 +2,7 @@
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
-import { loadScreenData, createTipoMap, normalizeEvento, buildDailyGroups, startOfDay, addDays, formatLongDate, formatHour, statusClass, statusLabel, normalizeHexColor, sortByDateAndPriority, getTvTokenFromRoute, validateTvToken } from './pantallaUtils'
+import { loadScreenData, createTipoMap, normalizeEvento, buildDailyGroups, startOfDay, addDays, formatLongDate, formatHour, statusClass, statusLabel, normalizeHexColor, sortByDateAndPriority, sortByPriorityAndHour, getTvTokenFromRoute, validateTvToken, getUpcomingFestivos } from './pantallaUtils'
 
 const loading = ref(true)
 const error = ref('')
@@ -28,6 +28,12 @@ async function loadData() {
     eventos.value = data.eventos.map((evento) => normalizeEvento(evento, tipoMap.value))
     error.value = data.eventosError
   } catch (requestError) {
+    console.error('[PantallaHoyProximosView] loadData failed', {
+      message: requestError?.message,
+      responseStatus: requestError?.response?.status,
+      responseData: requestError?.response?.data,
+      stack: requestError?.stack,
+    })
     error.value = requestError?.response?.data?.message || 'No se pudieron cargar los eventos.'
     eventos.value = []
   } finally {
@@ -48,10 +54,20 @@ const todaysEvents = computed(() =>
 const upcomingEvents = computed(() =>
   eventos.value
     .filter((evento) => evento.fechaInicioDate && evento.fechaInicioDate >= addDays(today.value, 1) && evento.fechaInicioDate <= nextSevenDaysEnd.value)
-    .sort(sortByDateAndPriority),
+    .sort(sortByPriorityAndHour),
 )
 
-const groupedUpcoming = computed(() => buildDailyGroups(upcomingEvents.value))
+const groupedUpcoming = computed(() => buildDailyGroups(upcomingEvents.value, sortByPriorityAndHour))
+const upcomingFestivos = computed(() => getUpcomingFestivos(eventos.value, addDays(today.value, 1), 3))
+const footerMessage = computed(() => {
+  if (upcomingFestivos.value.length > 0) {
+    return upcomingFestivos.value
+      .map((evento) => `${formatLongDate(evento.fechaInicioDate)} · ${evento.titulo}`)
+      .join(' · ')
+  }
+
+  return 'Sin festivos próximos programados en este periodo.'
+})
 
 const currentDateLabel = computed(() => formatLongDate(currentDateTime.value))
 const currentTimeLabel = computed(() => new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(currentDateTime.value))
@@ -77,7 +93,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="tv-screen tv-screen--today">
+  <main class="tv-page tv-screen tv-screen--today">
     <header class="tv-header">
       <div>
         <p class="tv-eyebrow">Agenda escolar</p>
@@ -132,21 +148,51 @@ onBeforeUnmount(() => {
       </article>
     </section>
 
+    <footer class="tv-footer">
+      <div class="tv-footer__block">
+        <strong>Próximos festivos</strong>
+        <span>{{ footerMessage }}</span>
+      </div>
+    </footer>
+
     <p v-if="error" class="tv-error">{{ error }}</p>
   </main>
 </template>
 
 <style scoped>
+.tv-page {
+  position: relative;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 48px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(97, 214, 167, 0.7) transparent;
+}
+
+.tv-page::-webkit-scrollbar {
+  width: 10px;
+}
+
+.tv-page::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tv-page::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(97, 214, 167, 0.7);
+}
+
 .tv-screen {
-  position: fixed;
-  inset: 0;
+  position: relative;
   padding: 32px;
   background:
     radial-gradient(circle at top left, rgba(97, 214, 167, 0.18), transparent 28%),
     radial-gradient(circle at bottom right, rgba(97, 214, 167, 0.1), transparent 24%),
     #f4fbf7;
   color: #0f172a;
-  overflow: hidden;
+  overflow: visible;
   font-size: 32px;
 }
 
@@ -174,7 +220,7 @@ onBeforeUnmount(() => {
 }
 
 .tv-header h1 {
-  font-size: clamp(3rem, 3vw, 5rem);
+  font-size: clamp(3.75rem, 4vw, 5.75rem);
   line-height: 1;
 }
 
@@ -193,7 +239,7 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: 1fr 1.2fr;
   gap: 24px;
-  height: calc(100vh - 170px);
+  min-height: calc(100vh - 170px);
 }
 
 .tv-panel {
@@ -208,7 +254,7 @@ onBeforeUnmount(() => {
 }
 
 .tv-panel h2 {
-  font-size: 2.2rem;
+  font-size: clamp(2.8rem, 2.8vw, 4.3rem);
 }
 
 .tv-list,
@@ -245,7 +291,7 @@ onBeforeUnmount(() => {
 }
 
 .tv-item__main strong {
-  font-size: 1.7rem;
+  font-size: 1.9rem;
   line-height: 1.05;
 }
 
@@ -303,6 +349,39 @@ onBeforeUnmount(() => {
   font-size: 1.4rem;
 }
 
+.tv-footer {
+  margin-top: 18px;
+  padding: 18px 22px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 2px solid rgba(15, 118, 110, 0.12);
+}
+
+.tv-footer__block {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 1.15rem;
+}
+
+.tv-footer__block strong {
+  color: #0f766e;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tv-footer__block span {
+  color: #334155;
+}
+
+@media (max-width: 1600px) {
+  .tv-header h1 {
+    font-size: clamp(3.25rem, 3.6vw, 5rem);
+  }
+}
+
 .tv-error {
   position: absolute;
   bottom: 20px;
@@ -328,11 +407,7 @@ onBeforeUnmount(() => {
 @media (max-width: 1100px) {
   .tv-two-col {
     grid-template-columns: 1fr;
-    height: auto;
-  }
-
-  .tv-screen {
-    overflow: auto;
+    min-height: auto;
   }
 }
 </style>

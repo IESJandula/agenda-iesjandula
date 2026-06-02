@@ -23,7 +23,29 @@ function normalizeEvento(evento) {
     lugar: evento.lugar ?? evento.ubicacion ?? evento.location ?? '-',
     estado: evento.estado ?? evento.estadoEvento ?? '-',
     motivoRechazo: evento.motivoRechazo ?? evento.motivo_rechazo ?? '',
+    responsables: Array.isArray(evento.responsables) ? evento.responsables : [],
+    responsablesIds: Array.isArray(evento.responsablesIds) ? evento.responsablesIds : [],
   }
+}
+
+function formatResponsables(evento) {
+  const nombres = (evento.responsables ?? [])
+    .map((responsable) => responsable?.nombre)
+    .filter(Boolean)
+
+  if (nombres.length === 0) {
+    if (Array.isArray(evento.responsablesIds) && evento.responsablesIds.length > 0) {
+      return `${evento.responsablesIds.length} responsables`
+    }
+
+    return '-'
+  }
+
+  if (nombres.length <= 2) {
+    return nombres.join(', ')
+  }
+
+  return `${nombres.length} responsables`
 }
 
 function statusLabel(status) {
@@ -160,6 +182,13 @@ onMounted(loadEventos)
         <p v-if="evento.motivoRechazo" class="evento-card__reason">
           Motivo de rechazo: {{ evento.motivoRechazo }}
         </p>
+
+        <dl class="evento-card__details evento-card__details--responsables">
+          <div>
+            <dt>Responsables</dt>
+            <dd>{{ formatResponsables(evento) }}</dd>
+          </div>
+        </dl>
 
         <div class="evento-card__actions">
           <RouterLink
@@ -313,6 +342,10 @@ onMounted(loadEventos)
   margin: 0;
   display: grid;
   gap: 12px;
+}
+
+.evento-card__details--responsables {
+  gap: 8px;
 }
 
 .evento-card__details div {
