@@ -42,6 +42,7 @@ class TipoEventoServiceTest {
                 .icono(request.getIcono())
                 .prioridad(request.getPrioridad())
                 .activo(request.getActivo())
+                .protegido(false)
                 .build();
 
         when(tipoEventoRepository.existsByNombreIgnoreCase(request.getNombre())).thenReturn(false);
@@ -55,6 +56,7 @@ class TipoEventoServiceTest {
         assertThat(response.getIcono()).isEqualTo("meeting_room");
         assertThat(response.getPrioridad()).isEqualTo(2);
         assertThat(response.isActivo()).isTrue();
+        assertThat(response.isProtegido()).isFalse();
         verify(tipoEventoRepository).save(any(TipoEvento.class));
     }
 
@@ -80,6 +82,7 @@ class TipoEventoServiceTest {
                 .icono("book")
                 .prioridad(1)
                 .activo(true)
+            .protegido(true)
                 .build();
 
         when(tipoEventoRepository.findAll()).thenReturn(List.of(tipoEvento));
@@ -111,6 +114,7 @@ class TipoEventoServiceTest {
                 .icono("school")
                 .prioridad(1)
                 .activo(true)
+            .protegido(false)
                 .build();
 
         when(tipoEventoRepository.findById(1L)).thenReturn(Optional.of(existente));
@@ -132,6 +136,7 @@ class TipoEventoServiceTest {
         TipoEvento existente = TipoEvento.builder()
                 .id(1L)
                 .nombre("Académico")
+            .protegido(false)
                 .build();
 
         when(tipoEventoRepository.findById(1L)).thenReturn(Optional.of(existente));

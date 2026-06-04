@@ -105,6 +105,7 @@ function normalizeEvento(evento) {
     tipoId: evento.tipoId ?? evento.tipo?.id ?? null,
     tipoNombre: evento.tipoNombre ?? evento.tipo?.nombre ?? evento.tipo?.descripcion ?? evento.tipo ?? '-',
     tipoColor: normalizeHexColor(evento.tipoColor) || '',
+    tipoPrioridad: Number.isFinite(Number(evento.tipoPrioridad)) ? Number(evento.tipoPrioridad) : null,
     fechaInicio: evento.fechaInicio ?? evento.fecha_inicio ?? evento.startDate ?? '',
     lugar: evento.lugar ?? evento.ubicacion ?? evento.location ?? '-',
     estado: evento.estado ?? evento.estadoEvento ?? '-',
@@ -152,7 +153,7 @@ const eventosEnriquecidos = computed(() =>
         dayKey: fechaInicioDate ? formatDayKey(fechaInicioDate) : '',
         tipoNombre: evento.tipoNombre || tipoMetadata?.nombre || '-',
         tipoColorResolved: evento.tipoColor || tipoMetadata?.color || defaultEventColor,
-        tipoPrioridad: tipoMetadata?.prioridad ?? null,
+        tipoPrioridad: evento.tipoPrioridad ?? tipoMetadata?.prioridad ?? null,
       }
     })
     .filter((evento) => Boolean(evento.fechaInicioDate)),

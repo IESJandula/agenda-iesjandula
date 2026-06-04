@@ -93,7 +93,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="tv-page tv-screen tv-screen--today">
+  <main class="tv-page tv-screen tv-screen--today tv-hoy-proximos">
     <header class="tv-header">
       <div>
         <p class="tv-eyebrow">Agenda escolar</p>
@@ -237,73 +237,75 @@ onBeforeUnmount(() => {
 
 .tv-two-col {
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr);
   gap: 24px;
-  min-height: calc(100vh - 170px);
+  align-items: start;
 }
 
 .tv-panel {
   background: rgba(255, 255, 255, 0.82);
   border: 2px solid rgba(15, 118, 110, 0.12);
   border-radius: 28px;
-  padding: 24px;
+  padding: 22px 24px;
+  min-width: 0;
+  min-height: 0;
   display: grid;
-  gap: 18px;
+  gap: 14px;
   overflow: hidden;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
 }
 
 .tv-panel h2 {
-  font-size: clamp(2.8rem, 2.8vw, 4.3rem);
+  font-size: clamp(2.2rem, 2.2vw, 3.4rem);
 }
 
 .tv-list,
 .tv-group-list {
   display: grid;
-  gap: 16px;
+  gap: 12px;
   overflow: auto;
 }
 
 .tv-day-group {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .tv-day-group h3 {
-  font-size: 1.7rem;
+  font-size: 1.35rem;
   color: #0f766e;
 }
 
 .tv-item {
   border-radius: 20px;
   border: 2px solid transparent;
-  padding: 18px 20px;
+  padding: 14px 16px;
   display: flex;
   justify-content: space-between;
-  gap: 18px;
+  gap: 16px;
   align-items: center;
 }
 
 .tv-item__main {
   display: grid;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
 }
 
 .tv-item__main strong {
-  font-size: 1.9rem;
-  line-height: 1.05;
+  font-size: 1.35rem;
+  line-height: 1.08;
 }
 
 .tv-item__main span {
-  font-size: 1.1rem;
+  font-size: 0.98rem;
   color: #334155;
 }
 
 .tv-status {
-  padding: 0.5rem 0.9rem;
+  padding: 0.42rem 0.8rem;
   border-radius: 999px;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -329,7 +331,7 @@ onBeforeUnmount(() => {
 }
 
 .tv-empty {
-  min-height: 220px;
+  min-height: 160px;
   display: grid;
   place-items: center;
   text-align: center;
@@ -340,7 +342,7 @@ onBeforeUnmount(() => {
 }
 
 .tv-empty--big {
-  min-height: calc(100vh - 170px);
+  min-height: 240px;
 }
 
 .tv-empty p,
@@ -351,23 +353,23 @@ onBeforeUnmount(() => {
 
 .tv-footer {
   margin-top: 18px;
-  padding: 18px 22px;
-  border-radius: 20px;
+  padding: 22px 24px;
+  border-radius: 24px;
   background: rgba(255, 255, 255, 0.88);
   border: 2px solid rgba(15, 118, 110, 0.12);
 }
 
 .tv-footer__block {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  flex-wrap: wrap;
-  font-size: 1.15rem;
+  display: grid;
+  gap: 10px;
+  align-items: start;
+  font-size: 1.05rem;
+  line-height: 1.45;
 }
 
 .tv-footer__block strong {
   color: #0f766e;
-  font-size: 1.1rem;
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }

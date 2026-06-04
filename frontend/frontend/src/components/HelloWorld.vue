@@ -1,8 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import viteLogo from '../assets/vite.svg'
-import heroImg from '../assets/hero.png'
-import vueLogo from '../assets/vue.svg'
+import logo from '../assets/logo.jpg'
 
 const count = ref(0)
 </script>
@@ -10,9 +8,9 @@ const count = ref(0)
 <template>
   <section id="center">
     <div class="hero">
-      <img :src="heroImg" class="base" width="170" height="179" alt="" />
-      <img :src="vueLogo" class="framework" alt="Vue logo" />
-      <img :src="viteLogo" class="vite" alt="Vite logo" />
+      <img :src="logo" class="base" width="170" height="179" alt="Logo oficial del IES Jándula" />
+      <img :src="logo" class="framework" alt="Logo oficial del IES Jándula" />
+      <img :src="logo" class="vite" alt="Logo oficial del IES Jándula" />
     </div>
     <div>
       <h1>Get started</h1>
@@ -35,13 +33,13 @@ const count = ref(0)
       <ul>
         <li>
           <a href="https://vite.dev/" target="_blank">
-            <img class="logo" :src="viteLogo" alt="" />
+            <img class="logo" :src="logo" alt="" />
             Explore Vite
           </a>
         </li>
         <li>
           <a href="https://vuejs.org/" target="_blank">
-            <img class="button-icon" :src="vueLogo" alt="" />
+            <img class="button-icon" :src="logo" alt="" />
             Learn more
           </a>
         </li>

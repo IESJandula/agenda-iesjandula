@@ -166,33 +166,37 @@ public class EventoService {
         for (ImportarFestivoDTO festivo : eventosImportados) {
             Integer linea = festivo != null ? festivo.getLinea() : null;
             try {
+                if (festivo == null) {
+                    throw new BusinessException("FESTIVO_INVALIDO", "Se recibió un festivo inválido");
+                }
+
                 validarImportacionFestivo(festivo);
 
                 String clave = claveFestivo(festivo);
                 if (esFestivoDuplicado(festivo) || clavesProcesadas.contains(clave)) {
                     omitidosDuplicados++;
-                    continue;
+                } else {
+                    clavesProcesadas.add(clave);
+                    String tituloOriginal = festivo.getTitulo();
+                    String tituloNormalizado = tituloOriginal == null ? "" : tituloOriginal.trim();
+
+                    Evento evento = Evento.builder()
+                            .tipo(tipoFestivo)
+                            .creador(creador)
+                            .titulo(tituloNormalizado)
+                            .descripcion(festivo.getDescripcion())
+                            .fechaInicio(festivo.getFechaInicio().atStartOfDay())
+                            .fechaFin(festivo.getFechaFin().atTime(LocalTime.of(23, 59, 59)))
+                            .lugar("Festivo")
+                            .gruposAfectados("General")
+                            .enlaceDocumento(null)
+                            .numAsistentes(null)
+                            .estado(EstadoEvento.CONFIRMADO)
+                            .build();
+
+                    Evento guardado = eventoRepository.save(evento);
+                    importados.add(convertirAResponse(guardado));
                 }
-
-                clavesProcesadas.add(clave);
-                String tituloNormalizado = festivo.getTitulo() == null ? "" : festivo.getTitulo().trim();
-
-                Evento evento = Evento.builder()
-                        .tipo(tipoFestivo)
-                        .creador(creador)
-                    .titulo(tituloNormalizado)
-                        .descripcion(festivo.getDescripcion())
-                        .fechaInicio(festivo.getFechaInicio().atStartOfDay())
-                        .fechaFin(festivo.getFechaFin().atTime(LocalTime.of(23, 59, 59)))
-                        .lugar("Festivo")
-                        .gruposAfectados("General")
-                        .enlaceDocumento(null)
-                        .numAsistentes(null)
-                        .estado(EstadoEvento.CONFIRMADO)
-                        .build();
-
-                Evento guardado = eventoRepository.save(evento);
-                importados.add(convertirAResponse(guardado));
             } catch (BusinessException ex) {
                 errores.add(ImportarFestivoErrorDTO.builder()
                         .linea(linea)
@@ -374,6 +378,7 @@ public class EventoService {
                 .tipoId(tipo != null ? tipo.getId() : null)
                 .tipoNombre(tipo != null ? tipo.getNombre() : null)
                 .tipoColor(tipo != null ? tipo.getColor() : null)
+            .tipoPrioridad(tipo != null ? tipo.getPrioridad() : null)
                 .titulo(evento.getTitulo())
                 .descripcion(evento.getDescripcion())
                 .fechaInicio(evento.getFechaInicio())

@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const STORAGE_KEY = 'agenda-iesjandula-auth'
 
-export const apiBaseUrl = 'http://localhost:8080'
+export const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 
 function readStoredSession() {
   if (typeof window === 'undefined') {

@@ -1,0 +1,905 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Outfit:wght@600;700;800&display=swap');
+
+/* ========================================
+   SISTEMA DE DISEÑO GLOBAL
+   ======================================== */
+.vista-titulo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.vista-titulo {
+    text-align: center !important;
+    font-family: 'Outfit', system-ui, -apple-system, sans-serif !important;
+    color: var(--seneca-azul-principal) !important;
+    font-size: clamp(2rem, 5vw, 3rem) !important;
+    font-weight: 800 !important;
+    margin: 0 !important;
+    margin-bottom: 0px !important;
+    letter-spacing: -0.03em !important;
+    position: relative !important;
+    padding-bottom: 0 !important;
+    border-bottom: none !important;
+    display: inline-block !important;
+}
+
+.vista-titulo::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--seneca-azul-medio) 0%, var(--seneca-naranja-gradiente) 100%);
+    border-radius: 2px;
+}
+/* ========================================
+   SISTEMA DE COLORES SÉNECA
+   ======================================== */
+:root {
+    /* Colores principales Séneca - Paleta Actualizada */
+    --seneca-azul-oscuro: #2c3e50;      /* Header superior usuario */
+    --seneca-azul-principal: #004a70;   /* Barra herramientas principal */
+    --seneca-azul-medio: #00698c;       /* Encabezados de sección */
+    --seneca-azul-claro: #e6f3fa;       /* Fondos claros / Selección */
+    --seneca-azul-muy-claro: #f0f7fc;   /* Hover tablas */
+    
+    --seneca-naranja-gradiente: #e86c1e; /* Para mantener degradados estéticos */
+    --seneca-naranja: #00698c;          /* Replaced with Azul Medio to remove orange */
+    --seneca-naranja-hover: #004a70;    /* Replaced with Azul Oscuro */
+    
+    /* Colores de estado */
+    --seneca-exito: #28a745;
+    --seneca-exito-hover: #218838;
+    --seneca-info: #17a2b8;
+    --seneca-info-hover: #138496;
+    --seneca-advertencia: #ffc107;
+    --seneca-advertencia-hover: #e0a800;
+    --seneca-peligro: #dc3545;
+    --seneca-peligro-hover: #c82333;
+    
+    /* Grises */
+    --seneca-gris-muy-oscuro: #333333;
+    --seneca-gris-oscuro: #555555;
+    --seneca-gris-medio: #888888;
+    --seneca-gris-claro: #dddddd;
+    --seneca-gris-muy-claro: #eeeeee;
+    --seneca-fondo-gris: #f4f4f4;       /* Fondo general de la app */
+    
+    /* Blancos y negros */
+    --seneca-blanco: #ffffff;
+    --seneca-negro: #0F172A;
+    
+    /* Sombras */
+    --seneca-sombra-suave: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --seneca-sombra-media: 0 4px 8px rgba(0, 0, 0, 0.1);
+    --seneca-sombra-fuerte: 0 8px 16px rgba(0, 0, 0, 0.15);
+    
+    /* Bordes */
+    --seneca-borde: #ced4da;
+    --seneca-borde-focus: #004a70;
+    
+    /* Transiciones */
+    --seneca-transition: all 0.3s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
+}
+
+html {
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    background-color: var(--seneca-fondo-gris);
+    color: var(--seneca-gris-muy-oscuro);
+}
+
+/* ========================================
+   ESTILOS GLOBALES DE BOTONES SÉNECA
+   ======================================== */
+button, .btn {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--seneca-transition);
+    min-height: 44px;
+    min-width: 112px;
+    padding: 0.8rem 1.1rem;
+    font-size: 14px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-align: center;
+    line-height: 1.1;
+}
+
+.btn-primary, button.primary {
+    background-color: var(--seneca-azul-principal);
+    color: var(--seneca-blanco);
+    box-shadow: var(--seneca-sombra-suave);
+}
+
+.btn-primary:hover, button.primary:hover {
+    background-color: var(--seneca-azul-medio);
+    box-shadow: var(--seneca-sombra-media);
+}
+
+.btn-secondary {
+    background-color: var(--seneca-gris-claro);
+    color: var(--seneca-gris-muy-oscuro);
+    box-shadow: var(--seneca-sombra-suave);
+}
+
+.btn-secondary:hover {
+    background-color: var(--seneca-gris-medio);
+    color: var(--seneca-blanco);
+}
+
+.btn-success {
+    background-color: var(--seneca-exito);
+    color: var(--seneca-blanco);
+}
+
+.btn-success:hover {
+    background-color: var(--seneca-exito-hover);
+}
+
+.btn-danger {
+    background-color: var(--seneca-peligro);
+    color: var(--seneca-blanco);
+}
+
+.btn-danger:hover {
+    background-color: var(--seneca-peligro-hover);
+}
+
+.btn-warning {
+    background-color: var(--seneca-advertencia);
+    color: var(--seneca-gris-muy-oscuro);
+}
+
+.btn-warning:hover {
+    background-color: var(--seneca-advertencia-hover);
+}
+
+.btn-info {
+    background-color: var(--seneca-info);
+    color: var(--seneca-blanco);
+}
+
+.btn-info:hover {
+    background-color: var(--seneca-info-hover);
+}
+
+/* ========================================
+   ESTILOS GLOBALES DE FORMULARIOS SÉNECA
+   ======================================== */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+textarea,
+select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--seneca-borde);
+    border-radius: 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    transition: var(--seneca-transition);
+    background-color: var(--seneca-blanco);
+    color: var(--seneca-gris-muy-oscuro);
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: var(--seneca-borde-focus);
+    box-shadow: 0 0 0 3px rgba(49, 120, 168, 0.1);
+}
+
+label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--seneca-gris-muy-oscuro);
+    font-size: 14px;
+}
+
+/* ========================================
+   ESTILOS GLOBALES DE TARJETAS SÉNECA
+   ======================================== */
+.card, .panel {
+    background-color: var(--seneca-blanco);
+    border-radius: 14px;
+    box-shadow: var(--seneca-sombra-suave);
+    padding: 24px;
+    margin-bottom: 20px;
+    border: 1px solid var(--seneca-gris-muy-claro);
+    color: var(--seneca-gris-muy-oscuro);
+}
+
+.card-header {
+    background-color: var(--seneca-azul-oscuro);
+    color: var(--seneca-blanco);
+    padding: 15px 20px;
+    border-radius: 6px 6px 0 0;
+    margin: -20px -20px 20px -20px;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.card-body {
+    color: var(--seneca-gris-muy-oscuro);
+}
+
+/* ========================================
+   ESTILOS GLOBALES DE TABLAS SÉNECA
+   ======================================== */
+table {
+    width: 100%;
+    border-collapse: separate; /* Mejor para bordes redondeados y fondos */
+    border-spacing: 0;
+    background-color: var(--seneca-blanco);
+    box-shadow: var(--seneca-sombra-suave);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+thead {
+    background-color: var(--seneca-azul-principal);
+    color: var(--seneca-blanco);
+}
+
+thead tr {
+    background-color: var(--seneca-azul-principal);
+    color: var(--seneca-blanco);
+}
+
+thead th {
+    background-color: var(--seneca-azul-principal);
+    color: var(--seneca-blanco) !important; /* Forzar color blanco */
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--seneca-azul-oscuro);
+}
+
+tbody tr {
+    border-bottom: 1px solid var(--seneca-gris-muy-claro);
+    transition: var(--seneca-transition);
+    background-color: var(--seneca-blanco);
+}
+
+tbody tr:hover {
+    background-color: var(--seneca-azul-muy-claro);
+}
+
+tbody td {
+    padding: 12px 15px;
+    font-size: 14px;
+    color: var(--seneca-gris-muy-oscuro);
+    vertical-align: middle;
+}
+
+/* ========================================
+   ESTILOS GLOBALES DE MODALES SÉNECA
+   ======================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(2px);
+}
+
+.modal-content {
+    background-color: var(--seneca-blanco);
+    border-radius: 8px;
+    box-shadow: var(--seneca-sombra-fuerte);
+    max-width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    background-color: var(--seneca-azul-oscuro);
+    color: var(--seneca-blanco);
+    padding: 20px;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2,
+.modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.modal-body {
+    padding: 25px;
+}
+
+.modal-footer {
+    padding: 20px;
+    background-color: var(--seneca-fondo-gris);
+    border-radius: 0 0 8px 8px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn-cerrar-modal {
+    background: transparent;
+    border: none;
+    color: var(--seneca-blanco);
+    font-size: 28px;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: var(--seneca-transition);
+}
+
+.btn-cerrar-modal:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+/* ========================================
+   ESTILOS GLOBALES DE BADGES SÉNECA
+   ======================================== */
+.badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-primary {
+    background-color: var(--seneca-azul-principal);
+    color: var(--seneca-blanco);
+}
+
+.badge-success {
+    background-color: var(--seneca-exito);
+    color: var(--seneca-blanco);
+}
+
+.badge-warning {
+    background-color: var(--seneca-advertencia);
+    color: var(--seneca-blanco);
+}
+
+.badge-danger {
+    background-color: var(--seneca-peligro);
+    color: var(--seneca-blanco);
+}
+
+.badge-info {
+    background-color: var(--seneca-info);
+    color: var(--seneca-blanco);
+}
+
+.badge-secondary {
+    background-color: var(--seneca-gris-claro);
+    color: var(--seneca-gris-muy-oscuro);
+}
+
+/* ========================================
+   ESTILOS GLOBALES DE ALERTAS SÉNECA
+   ======================================== */
+.alert {
+    padding: 15px 20px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border-left: 4px solid;
+    font-size: 14px;
+}
+
+.alert-success {
+    background-color: #dff0d8;
+    border-color: var(--seneca-exito);
+    color: #3c763d;
+}
+
+.alert-info {
+    background-color: #d9edf7;
+    border-color: var(--seneca-info);
+    color: #31708f;
+}
+
+.alert-warning {
+    background-color: #fcf8e3;
+    border-color: var(--seneca-advertencia);
+    color: #8a6d3b;
+}
+
+.alert-danger {
+    background-color: #f2dede;
+    border-color: var(--seneca-peligro);
+    color: #a94442;
+}
+
+/* ========================================
+   REGLAS DE CONTRASTE Y ACCESIBILIDAD
+   ======================================== */
+/* Clases de utilidad para contraste explícito */
+.bg-white, .background-white {
+    background-color: var(--seneca-blanco);
+}
+
+.bg-light, .background-light {
+    background-color: var(--seneca-fondo-gris);
+}
+
+.bg-dark, .background-dark {
+    background-color: var(--seneca-azul-oscuro);
+}
+
+.bg-primary, .background-primary {
+    background-color: var(--seneca-azul-principal);
+}
+
+/* Clases de texto explícitas */
+.text-white {
+    color: var(--seneca-blanco) !important;
+}
+
+.text-dark {
+    color: var(--seneca-gris-muy-oscuro) !important;
+}
+
+/* ========================================
+   UTILIDADES GENERALES
+   ======================================== */
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.text-dark {
+    color: var(--seneca-gris-muy-oscuro) !important;
+}
+
+.text-light {
+    color: var(--seneca-blanco) !important;
+}
+
+.text-primary {
+    color: var(--seneca-azul-principal) !important;
+}
+
+.text-muted {
+    color: var(--seneca-gris-oscuro) !important;
+}
+
+.mb-10 { margin-bottom: 10px; }
+.mb-15 { margin-bottom: 15px; }
+.mb-20 { margin-bottom: 20px; }
+.mb-30 { margin-bottom: 30px; }
+
+.mt-10 { margin-top: 10px; }
+.mt-15 { margin-top: 15px; }
+.mt-20 { margin-top: 20px; }
+.mt-30 { margin-top: 30px; }
+
+.p-10 { padding: 10px; }
+.p-15 { padding: 15px; }
+.p-20 { padding: 20px; }
+.p-30 { padding: 30px; }
+
+/* Toast notifications con z-index más alto que los modales */
+.Vue-Toastification__container {
+    z-index: 999999 !important;
+    position: fixed !important;
+}
+
+.custom-toast-container {
+    z-index: 999999 !important;
+    position: fixed !important;
+}
+
+.Vue-Toastification__toast {
+    z-index: 999999 !important;
+}
+
+/* Asegurar que los toast estén siempre por encima de todo */
+.Vue-Toastification__container--top-left,
+.Vue-Toastification__container--top-center,
+.Vue-Toastification__container--top-right,
+.Vue-Toastification__container--bottom-left,
+.Vue-Toastification__container--bottom-center,
+.Vue-Toastification__container--bottom-right {
+    z-index: 999999 !important;
+}
+
+/* ========================================
+   UTILIDADES DE ACCESIBILIDAD
+   ======================================== */
+
+/* Clase para ocultar visualmente pero mantener accesible para lectores de pantalla */
+.visually-hidden,
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Opción para mostrar solo cuando está enfocado (útil para skip links) */
+.visually-hidden-focusable:not(:focus):not(:focus-within) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Skip to main content link */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--seneca-azul-principal);
+    color: var(--seneca-blanco);
+    padding: 12px 20px;
+    text-decoration: none;
+    z-index: 100000;
+    border-radius: 0 0 4px 0;
+    font-weight: 600;
+    transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+    top: 0;
+    outline: 2px solid var(--seneca-naranja);
+    outline-offset: 2px;
+}
+
+/* Mejorar el contraste de los focus states */
+:focus-visible {
+    outline: 2px solid var(--seneca-azul-principal);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--seneca-azul-principal);
+    outline-offset: 2px;
+}
+
+/* Indicador de carga accesible */
+.loading {
+    position: relative;
+}
+
+.loading::after {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 3px solid var(--seneca-azul-claro);
+    border-top-color: var(--seneca-azul-principal);
+    border-radius: 50%;
+    animation: spinner 0.8s linear infinite;
+}
+
+@keyframes spinner {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Animaciones respetando prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Mejoras de contraste para alto contraste */
+@media (prefers-contrast: high) {
+    button,
+    .btn {
+        border: 2px solid currentColor;
+    }
+    
+    a {
+        text-decoration: underline;
+    }
+}
+
+/* ========================================
+   RESPONSIVE DESIGN - MOBILE FIRST
+   ======================================== */
+
+/* Mejoras de diseño para móviles */
+@media (max-width: 639px) {
+    /* Aumentar tamaño mínimo de toque */
+    button,
+    .btn,
+    a,
+    input[type="checkbox"],
+    input[type="radio"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Mejorar padding en tarjetas */
+    .card, .panel {
+        padding: 16px;
+    }
+    
+    /* Tablas responsivas en móvil */
+    table {
+        font-size: 13px;
+    }
+    
+    thead th,
+    tbody td {
+        padding: 10px 8px;
+    }
+    
+    /* Formularios más amplios */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    textarea,
+    select {
+        font-size: 16px;
+        min-height: 48px;
+    }
+    
+    /* Modales a pantalla completa en móvil pequeños */
+    .modal-content {
+        max-width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+}
+
+/* Tablets portrait */
+@media (min-width: 640px) {
+    .card, .panel {
+        padding: 24px;
+    }
+    
+    table {
+        font-size: 14px;
+    }
+    
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    textarea,
+    select {
+        font-size: 15px;
+    }
+}
+
+/* Tablets landscape y pequeños desktops */
+@media (min-width: 768px) {
+    .card, .panel {
+        padding: 28px;
+    }
+    
+    /* Mejorar spacing en desktop */
+    .mb-10 { margin-bottom: 12px; }
+    .mb-15 { margin-bottom: 18px; }
+    .mb-20 { margin-bottom: 24px; }
+    .mb-30 { margin-bottom: 36px; }
+}
+
+/* Desktops medianos */
+@media (min-width: 1024px) {
+    /* Efectos hover solo en dispositivos con puntero preciso */
+    @media (hover: hover) and (pointer: fine) {
+        tbody tr:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        .card:hover, .panel:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+    }
+}
+
+/* Desktops grandes */
+@media (min-width: 1280px) {
+    .card, .panel {
+        padding: 32px;
+    }
+}
+
+/* Ultra wide */
+@media (min-width: 1536px) {
+    /* Limitar ancho máximo de contenido para mejor legibilidad */
+    .card, .panel {
+        max-width: 1400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* Modo landscape en móviles */
+@media (max-height: 500px) and (orientation: landscape) {
+    .modal-content {
+        max-height: 95vh;
+        overflow-y: auto;
+    }
+}
+
+/* Optimizaciones para touch devices */
+@media (hover: none) and (pointer: coarse) {
+    /* Aumentar áreas de toque */
+    button,
+    .btn,
+    a {
+        min-height: 44px;
+        padding: 12px 20px;
+    }
+    
+    /* Remover efectos hover en touch */
+    .card:hover, .panel:hover,
+    tbody tr:hover {
+        transform: none;
+        box-shadow: var(--seneca-sombra-suave);
+    }
+    
+    /* Mejorar feedback táctil */
+    button:active,
+    .btn:active,
+    a:active {
+        transform: scale(0.98);
+        opacity: 0.8;
+    }
+}
+
+/* Utilidades de texto */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.font-bold { font-weight: 700; }
+.font-semibold { font-weight: 600; }
+.font-medium { font-weight: 500; }
+.font-normal { font-weight: 400; }
+
+/* Utilidades de display */
+.hidden { display: none !important; }
+.block { display: block !important; }
+.inline-block { display: inline-block !important; }
+.flex { display: flex !important; }
+.inline-flex { display: inline-flex !important; }
+
+/* Utilidades flex */
+.flex-col { flex-direction: column; }
+.flex-row { flex-direction: row; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.justify-around { justify-content: space-around; }
+.gap-1 { gap: 0.25rem; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+
+/* Estado de carga global */
+.spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spinner 0.8s linear infinite;
+}
+
+/* Mejora de selección de texto */
+::selection {
+    background-color: var(--seneca-azul-claro);
+    color: var(--seneca-azul-oscuro);
+}
+
+::-moz-selection {
+    background-color: var(--seneca-azul-claro);
+    color: var(--seneca-azul-oscuro);
+}
+

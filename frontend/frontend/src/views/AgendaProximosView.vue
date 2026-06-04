@@ -78,6 +78,7 @@ function normalizeEvento(evento) {
     tipoId: evento.tipoId ?? evento.tipo?.id ?? null,
     tipoNombre: evento.tipoNombre ?? evento.tipo?.nombre ?? evento.tipo?.descripcion ?? evento.tipo ?? '-',
     tipoColor: normalizeHexColor(evento.tipoColor) || '',
+    tipoPrioridad: Number.isFinite(Number(evento.tipoPrioridad)) ? Number(evento.tipoPrioridad) : null,
     fechaInicio: evento.fechaInicio ?? evento.fecha_inicio ?? evento.startDate ?? '',
     fechaInicioDate,
     lugar: evento.lugar ?? evento.ubicacion ?? evento.location ?? '-',
@@ -106,7 +107,7 @@ const eventosProximos = computed(() =>
         ...evento,
         tipoNombre: evento.tipoNombre || tipoMetadata?.nombre || '-',
         tipoColorResolved: evento.tipoColor || tipoMetadata?.color || '#61d6a7',
-        tipoPrioridad: tipoMetadata?.prioridad ?? null,
+        tipoPrioridad: evento.tipoPrioridad ?? tipoMetadata?.prioridad ?? null,
         fechaInicioDate,
         dayKey: fechaInicioDate ? formatDayKey(fechaInicioDate) : '',
       }

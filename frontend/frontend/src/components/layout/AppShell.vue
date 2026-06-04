@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import logo from '../../assets/logo.jpg'
 
 import { useAuthStore } from '../../stores/auth'
 
@@ -47,7 +48,7 @@ function handleLogout() {
     <aside class="shell__sidebar">
       <div class="shell__sidebar-inner">
         <div class="shell__brand">
-          <div class="shell__logo">AJ</div>
+          <img class="shell__logo" :src="logo" alt="Logo oficial del IES Jándula" />
           <div class="shell__brand-text">
             <p class="shell__brand-name">Agenda</p>
             <p class="shell__brand-subtitle">IES Jándula</p>
@@ -135,15 +136,13 @@ function handleLogout() {
 }
 
 .shell__logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 1rem;
-  background: var(--primary);
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  padding: 2px;
 }
 
 .shell__brand-text {
@@ -282,7 +281,9 @@ function handleLogout() {
 .shell__content {
   flex: 1;
   padding: 40px 48px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   gap: 24px;
 }
 

@@ -44,6 +44,9 @@ public class TipoEvento {
     @Column(nullable = false)
     private boolean activo;
 
+    @Column(nullable = false)
+    private boolean protegido;
+
     @JsonIgnore
     @OneToMany(mappedBy = "tipo")
     private List<Evento> eventos;

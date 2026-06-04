@@ -3,7 +3,7 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { useAuthStore } from '../stores/auth'
-import logoIes from '../assets/image.png'
+import logoIes from '../assets/logo.jpg'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -208,7 +208,7 @@ async function handleSubmit() {
 }
 
 .institution-logo {
-  height: 56px;
+  height: 80px;
   width: auto;
   object-fit: contain;
   display: block;
@@ -466,7 +466,7 @@ async function handleSubmit() {
   }
 
   .institution-logo {
-    height: 48px;
+    height: 64px;
   }
 
   .login-page__title {
@@ -502,7 +502,7 @@ async function handleSubmit() {
   }
 
   .institution-logo {
-    height: 40px;
+    height: 52px;
   }
 
   .login-page__icon {

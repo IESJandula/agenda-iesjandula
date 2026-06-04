@@ -99,6 +99,7 @@ function normalizeEvento(evento) {
     tipoId: evento.tipoId ?? evento.tipo?.id ?? null,
     tipoNombre: evento.tipoNombre ?? evento.tipo?.nombre ?? evento.tipo?.descripcion ?? evento.tipo ?? '-',
     tipoColor: normalizeHexColor(evento.tipoColor) || '',
+    tipoPrioridad: Number.isFinite(Number(evento.tipoPrioridad)) ? Number(evento.tipoPrioridad) : null,
     fechaInicio: evento.fechaInicio ?? evento.fecha_inicio ?? evento.startDate ?? '',
     lugar: evento.lugar ?? evento.ubicacion ?? evento.location ?? '-',
     estado: evento.estado ?? evento.estadoEvento ?? '-',
@@ -146,7 +147,7 @@ const eventosEnriquecidos = computed(() =>
         dayKey: fechaInicioDate ? formatDayKey(fechaInicioDate) : '',
         tipoNombre: evento.tipoNombre || tipoMetadata?.nombre || '-',
         tipoColorResolved: evento.tipoColor || tipoMetadata?.color || defaultEventColor,
-        tipoPrioridad: tipoMetadata?.prioridad ?? null,
+        tipoPrioridad: evento.tipoPrioridad ?? tipoMetadata?.prioridad ?? null,
       }
     })
     .filter((evento) => Boolean(evento.fechaInicioDate)),
@@ -478,12 +479,15 @@ onMounted(loadCourseCalendar)
 
 <style scoped>
 .curso-completo {
+  width: min(100%, 1440px);
+  margin: 0 auto;
   padding: 28px;
   display: grid;
   gap: 20px;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: 12px;
+  overflow-x: hidden;
 }
 
 .curso-completo__header {
@@ -547,10 +551,13 @@ onMounted(loadCourseCalendar)
 .curso-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 20px;
+  align-items: start;
 }
 
 .curso-month {
+  min-width: 0;
+  width: 100%;
   padding: 16px;
   border-radius: 12px;
   border: 1px solid var(--border);
@@ -568,7 +575,7 @@ onMounted(loadCourseCalendar)
 .curso-month__grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
+  gap: 4px;
 }
 
 .curso-month__weekdays span {
@@ -581,8 +588,10 @@ onMounted(loadCourseCalendar)
 }
 
 .curso-day {
-  min-height: 72px;
-  padding: 8px 6px;
+  width: 100%;
+  min-width: 0;
+  min-height: 60px;
+  padding: 6px 4px;
   border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--bg-elevated);
@@ -619,12 +628,12 @@ onMounted(loadCourseCalendar)
 }
 
 .curso-day__number {
-  width: 1.8rem;
-  height: 1.8rem;
+  width: 1.65rem;
+  height: 1.65rem;
   border-radius: 999px;
   display: grid;
   place-items: center;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 600;
   background: rgba(255, 255, 255, 0.35);
 }
@@ -635,23 +644,23 @@ onMounted(loadCourseCalendar)
 }
 
 .curso-day__indicators {
-  min-height: 12px;
+  min-height: 10px;
   display: flex;
-  gap: 4px;
+  gap: 3px;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
 }
 
 .curso-day__indicator {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.35);
 }
 
 .curso-day__more {
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   font-weight: 600;
   color: var(--primary);
 }
@@ -668,7 +677,6 @@ onMounted(loadCourseCalendar)
   color: var(--muted);
   text-align: center;
 }
-
 .curso-empty p {
   margin: 0;
 }
@@ -676,16 +684,18 @@ onMounted(loadCourseCalendar)
 .curso-modal {
   position: fixed;
   inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: rgba(17, 24, 39, 0.45);
-  display: grid;
-  place-items: center;
-  padding: 20px;
+  padding: 16px;
   z-index: 50;
 }
 
 .curso-modal__dialog {
-  width: min(760px, 100%);
-  max-height: min(80vh, 760px);
+  width: min(760px, calc(100vw - 32px));
+  max-width: 760px;
+  max-height: min(80vh, calc(100vh - 32px));
   overflow: auto;
   padding: 24px;
   border-radius: 16px;
@@ -815,6 +825,10 @@ onMounted(loadCourseCalendar)
     padding: 20px;
   }
 
+  .curso-grid {
+    gap: 16px;
+  }
+
   .curso-completo__header,
   .curso-item,
   .curso-item__top,
@@ -827,10 +841,12 @@ onMounted(loadCourseCalendar)
   }
 
   .curso-modal {
-    padding: 12px;
+    padding: 16px;
   }
 
   .curso-modal__dialog {
+    width: min(100%, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
     padding: 18px;
   }
 }

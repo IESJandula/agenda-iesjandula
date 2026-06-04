@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 
 import AppShell from '../components/layout/AppShell.vue'
-import { createTipo, deleteTipo, getTipos, updateTipo } from '../api/tipos.api'
+import { createTipo, deleteTipo, getTiposAdmin, updateTipo } from '../api/tipos.api'
 
 const tipos = ref([])
 const loading = ref(false)
@@ -21,6 +21,8 @@ const form = reactive({
 })
 
 const isEditMode = computed(() => editingId.value !== null)
+const editingTipo = computed(() => tipos.value.find((tipo) => String(tipo.id) === String(editingId.value)) ?? null)
+const editingTipoProtegido = computed(() => Boolean(editingTipo.value?.protegido))
 const submitLabel = computed(() => {
   if (submitting.value) {
     return isEditMode.value ? 'Guardando...' : 'Creando...'
@@ -74,7 +76,7 @@ async function loadTipos() {
   formError.value = ''
 
   try {
-    const response = await getTipos()
+    const response = await getTiposAdmin()
     tipos.value = normalizeCollection(response)
   } catch (requestError) {
     formError.value = requestError?.response?.data?.message || 'No se pudieron cargar los tipos.'
@@ -108,6 +110,13 @@ async function handleSubmit() {
 }
 
 async function handleDelete(id) {
+  const tipo = tipos.value.find((item) => String(item.id) === String(id)) ?? null
+
+  if (tipo?.protegido) {
+    formError.value = 'Los tipos oficiales y la opción Otro no se pueden eliminar.'
+    return
+  }
+
   const confirmed = window.confirm('¿Seguro que quieres eliminar este tipo de evento?')
 
   if (!confirmed) {
@@ -120,7 +129,6 @@ async function handleDelete(id) {
     if (editingId.value === id) {
       resetForm()
     }
-+
     await loadTipos()
   } catch (requestError) {
     formError.value = requestError?.response?.data?.message || 'No se pudo eliminar el tipo.'
@@ -149,7 +157,8 @@ onMounted(loadTipos)
       <form class="tipos-form" @submit.prevent="handleSubmit">
         <label class="tipos-form__field">
           <span>Nombre *</span>
-          <input v-model="form.nombre" class="input" type="text" maxlength="80" required />
+          <input v-model="form.nombre" class="input" type="text" maxlength="80" :disabled="editingTipoProtegido" required />
+          <small v-if="editingTipoProtegido" class="tipos-form__field-error">Los tipos oficiales no se pueden renombrar.</small>
           <small v-if="fieldErrors.nombre" class="tipos-form__field-error">{{ fieldErrors.nombre }}</small>
         </label>
 
@@ -206,6 +215,7 @@ onMounted(loadTipos)
               <th>Icono</th>
               <th>Prioridad</th>
               <th>Activo</th>
+              <th>Protegido</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -226,9 +236,14 @@ onMounted(loadTipos)
                 </span>
               </td>
               <td>
+                <span :class="tipo.protegido ? 'tipos-table__badge tipos-table__badge--on' : 'tipos-table__badge'">
+                  {{ tipo.protegido ? 'Sí' : 'No' }}
+                </span>
+              </td>
+              <td>
                 <div class="tipos-table__actions">
                   <button class="btn btn--ghost" type="button" @click="startEdit(tipo)">Editar</button>
-                  <button class="btn btn--ghost tipos-table__delete" type="button" @click="handleDelete(tipo.id)">
+                  <button class="btn btn--ghost tipos-table__delete" type="button" :disabled="tipo.protegido" @click="handleDelete(tipo.id)">
                     Eliminar
                   </button>
                 </div>

@@ -11,3 +11,22 @@ Las peticiones a `POST /api/eventos` y `PUT /api/eventos/{id}` deben enviar `fec
 ```
 
 Si se envía otro formato, la API devolverá un error de validación antes de procesar el evento.
+
+## Ejecución con Docker
+
+Levantar servicios:
+
+```bash
+docker compose up --build
+```
+
+Parar servicios:
+
+```bash
+docker compose down
+```
+
+URLs:
+
+- Frontend: http://localhost:5173
+- Backend: http://localhost:8080

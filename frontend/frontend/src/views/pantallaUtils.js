@@ -182,6 +182,7 @@ export function createTipoMap(tipos) {
       nombre: tipo.nombre ?? '-',
       color: normalizedColor,
       prioridad: Number.isFinite(Number(tipo.prioridad)) ? Number(tipo.prioridad) : null,
+      protegido: Boolean(tipo.protegido),
     })
   }
 
@@ -199,7 +200,9 @@ export function normalizeEvento(evento, tipoMap) {
     tipoId,
     tipoNombre: evento.tipoNombre ?? evento.tipo?.nombre ?? evento.tipo?.descripcion ?? evento.tipo ?? tipoMetadata?.nombre ?? '-',
     tipoColor: normalizeHexColor(evento.tipoColor) || tipoMetadata?.color || '#61d6a7',
-    tipoPrioridad: tipoMetadata?.prioridad ?? null,
+    tipoPrioridad: Number.isFinite(Number(evento.tipoPrioridad))
+      ? Number(evento.tipoPrioridad)
+      : tipoMetadata?.prioridad ?? null,
     fechaInicio: evento.fechaInicio ?? evento.fecha_inicio ?? evento.startDate ?? '',
     fechaInicioDate,
     fechaFin: evento.fechaFin ?? evento.fecha_fin ?? evento.endDate ?? '',

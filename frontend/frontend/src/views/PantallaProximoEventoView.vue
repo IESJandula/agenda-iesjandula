@@ -66,7 +66,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="tv-page tv-screen tv-screen--next">
+  <main class="tv-page tv-screen tv-screen--next tv-proximo-evento">
     <header class="tv-header">
       <div>
         <p class="tv-eyebrow">Agenda escolar</p>
@@ -201,10 +201,10 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.92);
   border-radius: 32px;
   border: 4px solid #61d6a7;
-  padding: 26px 28px;
+  padding: 24px 26px;
   display: grid;
   align-content: start;
-  gap: 16px;
+  gap: 14px;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
 }
 
@@ -219,20 +219,20 @@ onBeforeUnmount(() => {
 
 .tv-feature__main h2 {
   margin: 0;
-  font-size: clamp(2.8rem, 3.4vw, 4.8rem);
+  font-size: clamp(2.6rem, 3.1vw, 4.4rem);
   line-height: 1;
 }
 
 .tv-feature__details {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   align-items: start;
 }
 
 .tv-feature__meta {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1rem;
   line-height: 1.45;
   color: #334155;
 }
@@ -243,7 +243,7 @@ onBeforeUnmount(() => {
 
 .tv-secondary-block {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
 .tv-secondary-block__header {
@@ -263,28 +263,29 @@ onBeforeUnmount(() => {
 
 .tv-next-list {
   display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: start;
 }
 
 .tv-next-item {
-  padding: 14px 16px;
-  border-radius: 18px;
+  min-height: 124px;
+  padding: 18px 18px;
+  border-radius: 20px;
   border: 2px solid transparent;
   background: rgba(255, 255, 255, 0.88);
   display: grid;
-  gap: 5px;
+  gap: 8px;
   align-content: start;
 }
 
 .tv-next-item strong {
-  font-size: 1.15rem;
-  line-height: 1.15;
+  font-size: 1.28rem;
+  line-height: 1.12;
 }
 
 .tv-next-item span {
-  font-size: 0.92rem;
+  font-size: 1rem;
   color: #334155;
 }
 
@@ -331,7 +332,17 @@ onBeforeUnmount(() => {
   }
 
   .tv-next-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .tv-next-list {
     grid-template-columns: 1fr;
+  }
+
+  .tv-feature__main {
+    padding: 22px;
   }
 }
 </style>

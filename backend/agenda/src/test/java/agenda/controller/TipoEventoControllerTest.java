@@ -36,13 +36,23 @@ class TipoEventoControllerTest {
     @Test
     void listarTodos_debeResponder200ConLista() throws Exception {
         TipoEventoResponseDTO response = crearResponse();
-        when(tipoEventoService.obtenerTodos()).thenReturn(List.of(response));
+        when(tipoEventoService.obtenerTiposPublicos()).thenReturn(List.of(response));
 
         mockMvc.perform(get("/api/tipos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].nombre").value("Reunión General"))
                 .andExpect(jsonPath("$[0].color").value("#1F8EF1"));
+    }
+
+    @Test
+    void listarAdmin_debeResponder200ConListaCompleta() throws Exception {
+        TipoEventoResponseDTO response = crearResponse();
+        when(tipoEventoService.obtenerTiposAdmin()).thenReturn(List.of(response));
+
+        mockMvc.perform(get("/api/tipos/admin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nombre").value("Reunión General"));
     }
 
     @Test
@@ -60,7 +70,7 @@ class TipoEventoControllerTest {
         CrearTipoEventoRequest request = crearRequest();
         when(tipoEventoService.crearTipoEvento(any(CrearTipoEventoRequest.class))).thenReturn(crearResponse());
 
-        mockMvc.perform(post("/api/tipos")
+        mockMvc.perform(post("/api/tipos/admin")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -76,7 +86,7 @@ class TipoEventoControllerTest {
         when(tipoEventoService.actualizarTipoEvento(org.mockito.ArgumentMatchers.eq(1L), any(CrearTipoEventoRequest.class)))
                 .thenReturn(crearResponse());
 
-        mockMvc.perform(put("/api/tipos/1")
+        mockMvc.perform(put("/api/tipos/admin/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -85,7 +95,7 @@ class TipoEventoControllerTest {
 
     @Test
     void eliminarTipo_debeResponder204() throws Exception {
-        mockMvc.perform(delete("/api/tipos/1"))
+        mockMvc.perform(delete("/api/tipos/admin/1"))
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));
 
@@ -110,6 +120,7 @@ class TipoEventoControllerTest {
         response.setIcono("meeting_room");
         response.setPrioridad(2);
         response.setActivo(true);
+        response.setProtegido(false);
         return response;
     }
 }

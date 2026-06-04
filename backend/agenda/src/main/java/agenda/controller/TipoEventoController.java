@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,29 +28,39 @@ public class TipoEventoController {
     private final TipoEventoService tipoEventoService;
 
     @GetMapping
-    public ResponseEntity<List<TipoEventoResponseDTO>> listarTodos() {
-        return ResponseEntity.ok(tipoEventoService.obtenerTodos());
+    public ResponseEntity<List<TipoEventoResponseDTO>> listarPublicos() {
+        return ResponseEntity.ok(tipoEventoService.obtenerTiposPublicos());
     }
 
-    @PostMapping
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<TipoEventoResponseDTO>> listarAdmin() {
+        return ResponseEntity.ok(tipoEventoService.obtenerTiposAdmin());
+    }
+
+    @PostMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TipoEventoResponseDTO> crearTipo(
             @Valid @RequestBody CrearTipoEventoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(tipoEventoService.crearTipoEvento(request));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TipoEventoResponseDTO> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(tipoEventoService.obtenerPorId(id));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/admin/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TipoEventoResponseDTO> actualizarTipo(
             @PathVariable Long id,
             @Valid @RequestBody CrearTipoEventoRequest request) {
         return ResponseEntity.ok(tipoEventoService.actualizarTipoEvento(id, request));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/admin/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> eliminarTipo(@PathVariable Long id) {
         tipoEventoService.eliminarTipoEvento(id);
         return ResponseEntity.noContent().build();

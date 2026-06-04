@@ -11,4 +11,5 @@ public class TipoEventoResponseDTO {
     private String icono;
     private int prioridad;
     private boolean activo;
+    private boolean protegido;
 }

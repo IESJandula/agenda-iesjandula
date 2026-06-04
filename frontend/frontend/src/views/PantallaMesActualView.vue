@@ -1,8 +1,9 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { X } from 'lucide-vue-next'
 
-import { createTipoMap, formatDayKey, formatLongDate, loadScreenData, monthLabel, normalizeEvento, screenWeekdays, startOfMonth, addDays, normalizeHexColor, buildMonthDays, statusClass, statusLabel, getTvTokenFromRoute, validateTvToken } from './pantallaUtils'
+import { createTipoMap, formatDayKey, formatHour, formatLongDate, loadScreenData, monthLabel, normalizeEvento, screenWeekdays, startOfMonth, addDays, normalizeHexColor, buildMonthDays, statusClass, statusLabel, getTvTokenFromRoute, validateTvToken } from './pantallaUtils'
 
 const loading = ref(true)
 const error = ref('')
@@ -10,6 +11,7 @@ const eventos = ref([])
 const tipoMap = ref(new Map())
 const timerId = ref(null)
 const today = ref(new Date())
+const selectedDay = ref(null)
 const route = useRoute()
 
 function refresh() {
@@ -80,18 +82,50 @@ function indicatorStyle(evento) {
   return { backgroundColor: normalizeHexColor(evento.tipoColor) || '#61d6a7' }
 }
 
+const selectedDayEvents = computed(() => selectedDay.value?.events ?? [])
+
+const selectedDayLabel = computed(() => {
+  if (!selectedDay.value?.date) {
+    return ''
+  }
+
+  return formatLongDate(selectedDay.value.date)
+})
+
+function openDayModal(day) {
+  if (!day?.events?.length) {
+    return
+  }
+
+  selectedDay.value = day
+}
+
+function closeDayModal() {
+  selectedDay.value = null
+}
+
+function onKeydown(event) {
+  if (event.key === 'Escape' && selectedDay.value) {
+    closeDayModal()
+  }
+}
+
 onMounted(async () => {
   await loadData()
   timerId.value = window.setInterval(() => {
     refresh()
     loadData()
   }, 5 * 60 * 1000)
+
+  window.addEventListener('keydown', onKeydown)
 })
 
 onBeforeUnmount(() => {
   if (timerId.value) {
     window.clearInterval(timerId.value)
   }
+
+  window.removeEventListener('keydown', onKeydown)
 })
 </script>
 
@@ -118,7 +152,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="tv-month-grid">
-        <article v-for="day in calendarDays" :key="day.key" class="tv-month-day" :class="{ 'tv-month-day--muted': !day.isCurrentMonth, 'tv-month-day--today': day.isToday, 'tv-month-day--active': day.events.length > 0 }">
+        <button v-for="day in calendarDays" :key="day.key" type="button" class="tv-month-day" :class="{ 'tv-month-day--muted': !day.isCurrentMonth, 'tv-month-day--today': day.isToday, 'tv-month-day--active': day.events.length > 0, 'tv-month-day--clickable': day.events.length > 0 }" :disabled="day.events.length === 0" @click="openDayModal(day)">
           <div class="tv-month-day__top">
             <strong>{{ day.date.getDate() }}</strong>
             <span v-if="day.events.length > 0">{{ day.events.length }}</span>
@@ -129,9 +163,47 @@ onBeforeUnmount(() => {
             <span v-for="evento in day.visibleIndicators" :key="evento.id" class="tv-indicator" :style="indicatorStyle(evento)"></span>
             <span v-if="day.hiddenCount > 0" class="tv-more">+{{ day.hiddenCount }}</span>
           </div>
-        </article>
+        </button>
       </div>
     </section>
+
+    <Teleport to="body">
+      <div v-if="selectedDay" class="tv-month-modal-overlay" @click.self="closeDayModal">
+        <div class="tv-month-modal" role="dialog" aria-modal="true" :aria-label="selectedDayLabel">
+          <header class="tv-month-modal__header">
+            <div>
+              <p class="tv-month-modal__eyebrow">Eventos del día</p>
+              <h2>{{ selectedDayLabel }}</h2>
+            </div>
+
+            <button class="tv-month-modal__close" type="button" aria-label="Cerrar" @click="closeDayModal">
+              <X :size="18" />
+            </button>
+          </header>
+
+          <div v-if="selectedDayEvents.length > 0" class="tv-month-modal__list">
+            <article v-for="evento in selectedDayEvents" :key="evento.id" class="tv-month-modal-event">
+              <div class="tv-month-modal-event__main">
+                <div class="tv-month-modal-event__top">
+                  <h3 class="tv-month-modal-event__title">{{ evento.titulo }}</h3>
+                  <span class="tv-month-modal-event__time">{{ formatHour(evento.fechaInicioDate) }}</span>
+                </div>
+
+                <p class="tv-month-modal-event__meta"><strong>Tipo:</strong> {{ evento.tipoNombre }}</p>
+                <p class="tv-month-modal-event__meta"><strong>Lugar:</strong> {{ evento.lugar }}</p>
+                <p class="tv-month-modal-event__meta"><strong>Estado:</strong> {{ statusLabel(evento.estado) }}</p>
+              </div>
+
+              <span class="tv-month-modal-event__status" :class="statusClass(evento.estado, 'tv-month-modal-event__status')">
+                {{ statusLabel(evento.estado) }}
+              </span>
+            </article>
+          </div>
+
+          <p v-else class="tv-month-modal__empty">No hay eventos para este día.</p>
+        </div>
+      </div>
+    </Teleport>
 
     <p v-if="error" class="tv-error">{{ error }}</p>
   </main>
@@ -237,6 +309,9 @@ onBeforeUnmount(() => {
 }
 
 .tv-month-day {
+  appearance: none;
+  width: 100%;
+  min-width: 0;
   min-height: 120px;
   padding: 12px;
   border-radius: 18px;
@@ -245,6 +320,16 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  text-align: left;
+  cursor: default;
+}
+
+.tv-month-day--clickable {
+  cursor: pointer;
+}
+
+.tv-month-day:disabled {
+  cursor: default;
 }
 
 .tv-month-day--muted {
@@ -299,6 +384,151 @@ onBeforeUnmount(() => {
   opacity: 0.7;
 }
 
+.tv-month-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.tv-month-modal {
+  width: min(820px, calc(100vw - 32px));
+  max-height: 85vh;
+  overflow: auto;
+  padding: 24px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 2px solid rgba(15, 118, 110, 0.14);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.26);
+  display: grid;
+  gap: 18px;
+}
+
+.tv-month-modal__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.tv-month-modal__eyebrow {
+  margin: 0 0 8px;
+  color: #0f766e;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.tv-month-modal__header h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 2.2vw, 2.6rem);
+  line-height: 1.1;
+}
+
+.tv-month-modal__close {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  border-radius: 12px;
+  background: #eefaf4;
+  color: #0f172a;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.tv-month-modal__list {
+  display: grid;
+  gap: 12px;
+}
+
+.tv-month-modal-event {
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 118, 110, 0.14);
+  background: linear-gradient(180deg, rgba(97, 214, 167, 0.1), rgba(255, 255, 255, 0.96));
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.tv-month-modal-event__main {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tv-month-modal-event__top {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tv-month-modal-event__title {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.15;
+}
+
+.tv-month-modal-event__time {
+  color: #0f766e;
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tv-month-modal-event__meta {
+  margin: 0;
+  color: #334155;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.tv-month-modal-event__meta strong {
+  color: #0f172a;
+}
+
+.tv-month-modal-event__status {
+  padding: 0.42rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tv-month-modal-event__status--warning {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.tv-month-modal-event__status--success {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.tv-month-modal-event__status--danger {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.tv-month-modal-event__status--neutral {
+  color: #334155;
+  background: #e2e8f0;
+}
+
+.tv-month-modal__empty {
+  margin: 0;
+  color: #475569;
+  font-size: 1.05rem;
+}
+
 .tv-error {
   position: absolute;
   bottom: 20px;
@@ -320,6 +550,24 @@ onBeforeUnmount(() => {
 
   .tv-calendar-card {
     min-height: auto;
+  }
+}
+
+@media (max-width: 820px) {
+  .tv-month-modal {
+    width: min(100%, calc(100vw - 32px));
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .tv-month-modal-event,
+  .tv-month-modal__header,
+  .tv-month-modal-event__top {
+    flex-direction: column;
+  }
+
+  .tv-month-modal-event__status {
+    align-self: flex-start;
   }
 }
 </style>

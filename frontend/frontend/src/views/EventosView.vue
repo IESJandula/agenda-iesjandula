@@ -254,12 +254,15 @@ onMounted(loadEventos)
 
 .eventos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 20px;
+  align-items: stretch;
 }
 
 .evento-card {
   padding: 24px;
+  width: 100%;
+  height: 100%;
   display: grid;
   gap: 16px;
   background: var(--bg-elevated);
@@ -372,6 +375,13 @@ onMounted(loadEventos)
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 4px;
+  align-items: stretch;
+}
+
+.evento-card__actions .btn,
+.evento-card__actions a {
+  flex: 1 1 0;
+  min-width: 128px;
 }
 
 .evento-card__delete {

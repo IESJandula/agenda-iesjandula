@@ -1,24 +1,28 @@
 :root {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
   color: #1e293b;
-  background: #f6faf8;
+  background: var(--seneca-fondo-gris);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --bg: #f6faf8;
-  --bg-elevated: #ffffff;
-  --bg-soft: #f1f5f3;
-  --border: #e6f0eb;
+  --surface: var(--seneca-blanco);
+  --primary: var(--seneca-azul-principal);
+  --primary-strong: var(--seneca-azul-medio);
+  --bg: var(--seneca-fondo-gris);
+  --border: var(--seneca-borde);
+  --bg-elevated: var(--surface);
+  --bg-soft: var(--seneca-azul-claro);
   --text: #1e293b;
   --muted: #64748b;
-  --primary: #61d6a7;
-  --primary-strong: #4aca8a;
+  --primary: var(--seneca-azul-principal);
+  --primary-strong: var(--seneca-azul-medio);
   --success: #61d6a7;
   --danger: #ef4444;
   --warning: #f59e0b;
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
   --shadow-lg: 0 10px 32px rgba(0, 0, 0, 0.12);
+  --layout-max-width: 1440px;
 }
 
 * {
@@ -131,6 +135,27 @@ button {
   background: var(--bg);
 }
 
+.shell__main {
+  min-width: 0;
+}
+
+.shell__header,
+.shell__content {
+  width: min(100%, var(--layout-max-width));
+  margin-inline: auto;
+}
+
+.shell__content {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.shell__content > * {
+  min-width: 0;
+  width: 100%;
+}
+
 .surface {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
@@ -180,10 +205,13 @@ button {
   justify-content: center;
   gap: 0.6rem;
   border: 1px solid transparent;
-  border-radius: 8px;
-  padding: 0.85rem 1.2rem;
+  border-radius: 10px;
+  padding: 0.8rem 1.1rem;
+  min-height: 44px;
+  min-width: 112px;
   font-weight: 500;
   font-size: 0.95rem;
+  line-height: 1.1;
   transition: all 0.2s ease;
   cursor: pointer;
 }
@@ -225,8 +253,8 @@ button {
 .textarea {
   width: 100%;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
   color: var(--text);
   background: var(--bg-elevated);
   transition: all 0.2s ease;
@@ -246,7 +274,11 @@ button {
 }
 
 .grid--cards {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.table-wrap {
+  width: 100%;
 }
 
 .table-wrap {
@@ -277,6 +309,78 @@ button {
 
 .table tbody tr:hover {
   background: var(--bg-soft);
+}
+
+/* Compatibilidad mínima con el tema Séneca sin tocar los componentes Vue */
+.btn--primary.btn--primary {
+  background: var(--seneca-azul-principal);
+  border-color: var(--seneca-azul-principal);
+  color: var(--seneca-blanco);
+  box-shadow: var(--seneca-sombra-suave);
+}
+
+.btn--primary.btn--primary:hover {
+  background: var(--seneca-azul-medio);
+  border-color: var(--seneca-azul-medio);
+}
+
+.btn--ghost.btn--ghost {
+  background: var(--seneca-gris-claro);
+  border-color: var(--seneca-borde);
+  color: var(--seneca-gris-muy-oscuro);
+}
+
+.btn--ghost.btn--ghost:hover {
+  background: var(--seneca-azul-muy-claro);
+  border-color: var(--seneca-azul-claro);
+}
+
+.input.input,
+.select.select,
+.textarea.textarea {
+  background: var(--seneca-blanco);
+  border-color: var(--seneca-borde);
+  color: var(--seneca-gris-muy-oscuro);
+  box-shadow: none;
+}
+
+.input.input:focus,
+.select.select:focus,
+.textarea.textarea:focus {
+  border-color: var(--seneca-borde-focus);
+  box-shadow: 0 0 0 3px rgba(0, 74, 112, 0.12);
+}
+
+.table.table {
+  background: var(--seneca-blanco);
+  box-shadow: var(--seneca-sombra-suave);
+  border-radius: 6px;
+}
+
+.table.table th {
+  background: var(--seneca-azul-principal);
+  color: var(--seneca-blanco);
+}
+
+.badge.badge,
+.tipos-table__badge,
+.dashboard-table__status,
+.evento-card__estado,
+.propuesta-item__status,
+.agenda-item__status,
+.curso-item__status,
+.tv-status {
+  border-radius: 999px;
+  border: 1px solid var(--seneca-borde);
+  background: var(--seneca-azul-claro);
+  color: var(--seneca-azul-oscuro);
+}
+
+.panel.panel,
+.card.card {
+  background: var(--seneca-blanco);
+  border-color: var(--seneca-gris-muy-claro);
+  box-shadow: var(--seneca-sombra-suave);
 }
 
 @media (max-width: 900px) {

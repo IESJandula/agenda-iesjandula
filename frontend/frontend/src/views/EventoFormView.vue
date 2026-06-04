@@ -31,6 +31,7 @@ const form = reactive({
 
 const tipos = ref([])
 const usuarios = ref([])
+const eventoOriginal = ref(null)
 
 const loadingCatalogs = ref(false)
 const loadingEvento = ref(false)
@@ -39,6 +40,47 @@ const formError = ref('')
 const fieldErrors = ref({})
 
 const canSubmit = computed(() => !loadingCatalogs.value && !loadingEvento.value && !submitting.value)
+const tiposDisponibles = computed(() => {
+  const visibles = tipos.value
+    .filter((tipo) => {
+      const nombreNormalizado = String(tipo?.nombre ?? '').trim().toLowerCase()
+      return Boolean(tipo?.activo) && (tipo?.protegido || nombreNormalizado === 'otro')
+    })
+    .sort((tipoA, tipoB) => {
+      const prioridadA = Number.isFinite(Number(tipoA?.prioridad)) ? Number(tipoA.prioridad) : Number.MAX_SAFE_INTEGER
+      const prioridadB = Number.isFinite(Number(tipoB?.prioridad)) ? Number(tipoB.prioridad) : Number.MAX_SAFE_INTEGER
+
+      if (prioridadA !== prioridadB) {
+        return prioridadA - prioridadB
+      }
+
+      return String(tipoA?.nombre ?? '').localeCompare(String(tipoB?.nombre ?? ''), 'es', { sensitivity: 'base' })
+    })
+
+  if (!isEditMode.value || !eventoOriginal.value?.tipoId) {
+    return visibles
+  }
+
+  const tipoActualId = String(eventoOriginal.value.tipoId)
+  const existeTipoActual = visibles.some((tipo) => String(tipo.id) === tipoActualId)
+
+  if (existeTipoActual) {
+    return visibles
+  }
+
+  return [
+    ...visibles,
+    {
+      id: eventoOriginal.value.tipoId,
+      nombre: eventoOriginal.value.tipoNombre ?? 'Tipo actual',
+      color: eventoOriginal.value.tipoColor ?? '#9CA3AF',
+      prioridad: Number.isFinite(Number(eventoOriginal.value.tipoPrioridad)) ? Number(eventoOriginal.value.tipoPrioridad) : 99,
+      activo: true,
+      protegido: false,
+      esTipoExistente: true,
+    },
+  ]
+})
 const viewTitle = computed(() => (isEditMode.value ? 'Editar evento' : 'Nuevo evento'))
 const formTitle = computed(() => (isEditMode.value ? 'Editar evento' : 'Crear evento'))
 const submitLabel = computed(() => {
@@ -80,6 +122,7 @@ function fromBackendDateTime(value) {
 }
 
 function patchFormWithEvento(evento) {
+  eventoOriginal.value = evento ?? null
   form.tipoId = evento?.tipoId != null ? String(evento.tipoId) : ''
   form.creadorId = evento?.creadorId != null ? String(evento.creadorId) : ''
   form.responsablesIds = extractResponsablesIds(evento)
@@ -136,6 +179,7 @@ function resetErrors() {
 
 async function loadEventoForEdit() {
   if (!isEditMode.value) {
+    eventoOriginal.value = null
     return
   }
 
@@ -161,8 +205,8 @@ async function loadCatalogs() {
     tipos.value = normalizeCollection(tiposResponse)
     usuarios.value = normalizeCollection(usuariosResponse)
 
-    if (!form.tipoId && tipos.value.length > 0) {
-      form.tipoId = String(tipos.value[0].id)
+    if (!form.tipoId && tiposDisponibles.value.length > 0) {
+      form.tipoId = String(tiposDisponibles.value[0].id)
     }
 
     if (!form.creadorId && usuarios.value.length > 0) {
@@ -226,10 +270,11 @@ onMounted(async () => {
           <span>Tipo de evento *</span>
           <select v-model="form.tipoId" class="select" required>
             <option value="" disabled>Selecciona un tipo</option>
-            <option v-for="tipo in tipos" :key="tipo.id" :value="String(tipo.id)">
+            <option v-for="tipo in tiposDisponibles" :key="tipo.id" :value="String(tipo.id)">
               {{ tipo.nombre }}
             </option>
           </select>
+          <small class="evento-form__hint">Solo se muestran los tipos oficiales y la opción Otro.</small>
           <small v-if="fieldErrors.tipoId" class="evento-form__field-error">{{ fieldErrors.tipoId }}</small>
         </label>
 

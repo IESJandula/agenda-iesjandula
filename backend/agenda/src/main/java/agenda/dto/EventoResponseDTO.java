@@ -21,6 +21,7 @@ public class EventoResponseDTO {
     private Long tipoId;
     private String tipoNombre;
     private String tipoColor;
+    private Integer tipoPrioridad;
     private String titulo;
     private String descripcion;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")

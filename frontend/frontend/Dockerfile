@@ -2,8 +2,13 @@ FROM node:22-alpine AS build
 
 WORKDIR /app
 
+ARG VITE_API_URL
+ARG VITE_TV_TOKEN
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_TV_TOKEN=$VITE_TV_TOKEN
+
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 COPY . .
 RUN npm run build

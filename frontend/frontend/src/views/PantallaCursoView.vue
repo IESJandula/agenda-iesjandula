@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { X } from 'lucide-vue-next'
 
 import { addDays, buildCourseMonths, createTipoMap, formatLongDate, loadScreenData, monthLabel, normalizeEvento, screenWeekdays, normalizeHexColor, buildMonthDays, getTvTokenFromRoute, validateTvToken } from './pantallaUtils'
 
@@ -10,6 +11,7 @@ const eventos = ref([])
 const tipoMap = ref(new Map())
 const timerId = ref(null)
 const now = ref(new Date())
+const selectedDay = ref(null)
 const route = useRoute()
 
 function refresh() {
@@ -78,6 +80,58 @@ function indicatorStyle(evento) {
   return { backgroundColor: normalizeHexColor(evento.tipoColor) || '#61d6a7' }
 }
 
+function formatHour(value) {
+  if (!value) {
+    return ''
+  }
+
+  return new Intl.DateTimeFormat('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(value)
+}
+
+function openDayModal(day) {
+  console.log('CLICK TV CURSO', day)
+
+  if (!day?.events?.length) {
+    return
+  }
+
+  selectedDay.value = day
+}
+
+function closeDayModal() {
+  selectedDay.value = null
+}
+
+function selectedDayLabel(day) {
+  if (!day?.date) {
+    return ''
+  }
+
+  return formatLongDate(day.date)
+}
+
+function eventStatusLabel(status) {
+  const normalized = String(status || '').toUpperCase()
+
+  if (normalized === 'PENDIENTE') return 'Pendiente'
+  if (normalized === 'CONFIRMADO') return 'Confirmado'
+  if (normalized === 'RECHAZADO') return 'Rechazado'
+  if (normalized === 'CANCELADO') return 'Cancelado'
+  return normalized || 'Sin estado'
+}
+
+function eventStatusClass(status) {
+  const normalized = String(status || '').toUpperCase()
+
+  if (normalized === 'PENDIENTE') return 'tv-course-modal-event__status--warning'
+  if (normalized === 'CONFIRMADO') return 'tv-course-modal-event__status--success'
+  if (normalized === 'RECHAZADO' || normalized === 'CANCELADO') return 'tv-course-modal-event__status--danger'
+  return 'tv-course-modal-event__status--neutral'
+}
+
 onMounted(async () => {
   await loadData()
   timerId.value = window.setInterval(() => {
@@ -121,7 +175,15 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="tv-course-grid-days">
-          <article v-for="day in buildMonthDays(month, eventsByDayForMonth(month))" :key="day.key" class="tv-course-day" :class="{ 'tv-course-day--muted': !day.isCurrentMonth, 'tv-course-day--today': day.isToday, 'tv-course-day--active': day.events.length > 0 }">
+          <button
+            v-for="day in buildMonthDays(month, eventsByDayForMonth(month))"
+            :key="day.key"
+            type="button"
+            class="tv-course-day"
+            :class="{ 'tv-course-day--muted': !day.isCurrentMonth, 'tv-course-day--today': day.isToday, 'tv-course-day--active': day.events.length > 0, 'tv-course-day--clickable': day.events.length > 0 }"
+            :disabled="day.events.length === 0"
+            @click="openDayModal(day)"
+          >
             <div class="tv-course-day__top">
               <strong>{{ day.date.getDate() }}</strong>
               <span v-if="day.events.length > 0">{{ day.events.length }}</span>
@@ -132,10 +194,48 @@ onBeforeUnmount(() => {
               <span v-for="evento in day.visibleIndicators" :key="evento.id" class="tv-course-indicator" :style="indicatorStyle(evento)"></span>
               <span v-if="day.hiddenCount > 0" class="tv-course-more">+{{ day.hiddenCount }}</span>
             </div>
-          </article>
+          </button>
         </div>
       </article>
     </section>
+
+    <Teleport to="body">
+      <div v-if="selectedDay" class="tv-course-modal-overlay" @click.self="closeDayModal">
+        <div class="tv-course-modal" role="dialog" aria-modal="true" :aria-label="selectedDayLabel(selectedDay)">
+          <header class="tv-course-modal__header">
+            <div>
+              <p class="tv-course-modal__eyebrow">Eventos del día</p>
+              <h2>{{ selectedDayLabel(selectedDay) }}</h2>
+            </div>
+
+            <button class="tv-course-modal__close" type="button" aria-label="Cerrar" @click="closeDayModal">
+              <X :size="18" />
+            </button>
+          </header>
+
+          <div v-if="selectedDay.events.length > 0" class="tv-course-modal__list">
+            <article v-for="evento in selectedDay.events" :key="evento.id" class="tv-course-modal-event">
+              <div class="tv-course-modal-event__main">
+                <div class="tv-course-modal-event__top">
+                  <h3 class="tv-course-modal-event__title">{{ evento.titulo }}</h3>
+                  <span class="tv-course-modal-event__time">{{ formatHour(evento.fechaInicioDate) }}</span>
+                </div>
+
+                <p class="tv-course-modal-event__meta"><strong>Tipo:</strong> {{ evento.tipoNombre }}</p>
+                <p class="tv-course-modal-event__meta"><strong>Lugar:</strong> {{ evento.lugar }}</p>
+                <p class="tv-course-modal-event__meta"><strong>Fecha:</strong> {{ formatLongDate(evento.fechaInicioDate) }}</p>
+              </div>
+
+              <span class="tv-course-modal-event__status" :class="eventStatusClass(evento.estado)">
+                {{ eventStatusLabel(evento.estado) }}
+              </span>
+            </article>
+          </div>
+
+          <p v-else class="tv-course-modal__empty">No hay eventos para este día.</p>
+        </div>
+      </div>
+    </Teleport>
 
     <p v-if="error" class="tv-error">{{ error }}</p>
   </main>
@@ -226,6 +326,9 @@ onBeforeUnmount(() => {
 }
 
 .tv-course-day {
+  appearance: none;
+  width: 100%;
+  min-width: 0;
   min-height: 90px;
   padding: 10px;
   border-radius: 16px;
@@ -234,6 +337,15 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  cursor: default;
+}
+
+.tv-course-day--clickable {
+  cursor: pointer;
+}
+
+.tv-course-day:disabled {
+  cursor: default;
 }
 
 .tv-course-day--muted {
@@ -309,6 +421,169 @@ onBeforeUnmount(() => {
 
   .tv-screen {
     overflow: auto;
+  }
+}
+
+.tv-course-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.tv-course-modal {
+  width: min(820px, calc(100vw - 32px));
+  max-height: 85vh;
+  overflow: auto;
+  padding: 24px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 2px solid rgba(15, 118, 110, 0.14);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.26);
+  display: grid;
+  gap: 18px;
+}
+
+.tv-course-modal__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.tv-course-modal__eyebrow {
+  margin: 0 0 8px;
+  color: #0f766e;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.tv-course-modal__header h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 2.2vw, 2.6rem);
+  line-height: 1.1;
+}
+
+.tv-course-modal__close {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  border-radius: 12px;
+  background: #eefaf4;
+  color: #0f172a;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.tv-course-modal__list {
+  display: grid;
+  gap: 12px;
+}
+
+.tv-course-modal-event {
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 118, 110, 0.14);
+  background: linear-gradient(180deg, rgba(97, 214, 167, 0.1), rgba(255, 255, 255, 0.96));
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.tv-course-modal-event__main {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tv-course-modal-event__top {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tv-course-modal-event__title {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.15;
+}
+
+.tv-course-modal-event__time {
+  color: #0f766e;
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tv-course-modal-event__meta {
+  margin: 0;
+  color: #334155;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.tv-course-modal-event__meta strong {
+  color: #0f172a;
+}
+
+.tv-course-modal-event__status {
+  padding: 0.42rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tv-course-modal-event__status--warning {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.tv-course-modal-event__status--success {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.tv-course-modal-event__status--danger {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.tv-course-modal-event__status--neutral {
+  color: #334155;
+  background: #e2e8f0;
+}
+
+.tv-course-modal__empty {
+  margin: 0;
+  color: #475569;
+  font-size: 1.05rem;
+}
+
+@media (max-width: 820px) {
+  .tv-course-modal {
+    width: min(100%, calc(100vw - 32px));
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .tv-course-modal-event,
+  .tv-course-modal__header,
+  .tv-course-modal-event__top {
+    flex-direction: column;
+  }
+
+  .tv-course-modal-event__status {
+    align-self: flex-start;
   }
 }
 </style>

@@ -495,7 +495,7 @@ onMounted(loadData)
 }
 
 .reject-modal {
-  width: min(560px, 100%);
+  width: min(720px, 100%);
   padding: 22px;
   display: grid;
   gap: 16px;

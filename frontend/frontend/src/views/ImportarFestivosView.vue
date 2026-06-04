@@ -283,7 +283,8 @@ function formatDate(value) {
 }
 
 .import-festivos__file {
-  max-width: 360px;
+  width: min(100%, 520px);
+  max-width: 520px;
 }
 
 .import-festivos__fileinfo {
