@@ -33,8 +33,8 @@ const navigation = computed(() => [
   { label: 'Importar festivos', name: 'importar-festivos', roles: ['ADMIN'] },
   { label: 'Pantallas TV', name: 'pantallas-tv', roles: ['ADMIN'] },
   { label: 'Eventos', name: 'eventos' },
-  { label: 'Tipos', name: 'admin-tipos' },
-  { label: 'Usuarios', name: 'admin-usuarios' },
+  { label: 'Tipos', name: 'admin-tipos', roles: ['ADMIN'] },
+  { label: 'Usuarios', name: 'admin-usuarios', roles: ['ADMIN'] },
 ].filter((item) => !item.roles || item.roles.includes(authStore.rol)))
 
 function handleLogout() {

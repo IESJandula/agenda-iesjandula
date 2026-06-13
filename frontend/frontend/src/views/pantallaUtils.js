@@ -234,6 +234,62 @@ export function buildDailyGroups(eventos, comparator = sortByDateAndPriority) {
   return grouped
 }
 
+function getEventGroupKey(evento) {
+  return String(evento?.tipoId ?? evento?.tipoColorResolved ?? evento?.tipoColor ?? evento?.tipoNombre ?? evento?.id ?? '')
+}
+
+function getEventGroupColor(evento) {
+  return normalizeHexColor(evento?.tipoColorResolved ?? evento?.tipoColor) || '#61d6a7'
+}
+
+export function summarizeDayEvents(dayEvents) {
+  const events = [...(Array.isArray(dayEvents) ? dayEvents : [])].sort(sortByPriorityAndHour)
+  const grouped = new Map()
+
+  for (const evento of events) {
+    const groupKey = getEventGroupKey(evento)
+
+    if (!grouped.has(groupKey)) {
+      grouped.set(groupKey, [])
+    }
+
+    grouped.get(groupKey).push(evento)
+  }
+
+  const groups = [...grouped.values()]
+    .map((items) => {
+      const primaryEvent = items[0]
+
+      return {
+        key: getEventGroupKey(primaryEvent),
+        event: primaryEvent,
+        events: items,
+        count: items.length,
+        color: getEventGroupColor(primaryEvent),
+        title: primaryEvent?.titulo ?? 'Sin título',
+      }
+    })
+    .sort((a, b) => sortByPriorityAndHour(a.event, b.event))
+
+  return {
+    events,
+    total: events.length,
+    totalEventos: events.length,
+    groups,
+    gruposPorColor: groups,
+    primaryEvent: events[0] ?? null,
+    eventoPrincipal: events[0] ?? null,
+    showCounter: events.length >= 2,
+    pintarContador: events.length >= 2,
+    shouldShowCounter: events.length >= 2,
+    isEmpty: events.length === 0,
+    isSingle: events.length === 1,
+    isUniformGroup: events.length > 1 && groups.length === 1,
+    isMixedGroup: events.length > 1 && groups.length > 1,
+    hiddenGroupCount: Math.max(0, groups.length - 3),
+  }
+}
+
 export function buildMonthDays(monthDate, eventsByDay) {
   const firstDay = startOfMonth(monthDate)
   const monthIndex = firstDay.getMonth()
@@ -246,6 +302,7 @@ export function buildMonthDays(monthDate, eventsByDay) {
     const date = addDays(calendarStart, index)
     const key = formatDayKey(date)
     const dayEvents = [...(eventsByDay.get(key) ?? [])].sort(sortByPriorityAndHour)
+    const daySummary = summarizeDayEvents(dayEvents)
 
     days.push({
       date,
@@ -253,9 +310,10 @@ export function buildMonthDays(monthDate, eventsByDay) {
       isCurrentMonth: date.getMonth() === monthIndex,
       isToday: key === todayKey,
       events: dayEvents,
+      display: daySummary,
       visibleEvents: dayEvents.slice(0, 2),
       visibleIndicators: dayEvents.slice(0, 3),
-      hiddenCount: Math.max(0, dayEvents.length - 2),
+      hiddenCount: daySummary.hiddenGroupCount,
     })
   }
 

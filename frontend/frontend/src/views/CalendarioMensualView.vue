@@ -5,6 +5,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, X } from 'lucide-vue-next'
 import AppShell from '../components/layout/AppShell.vue'
 import { getEventos } from '../api/eventos.api'
 import { getTipos } from '../api/tipos.api'
+import { summarizeDayEvents } from './pantallaUtils'
 
 const weekdays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 const defaultEventColor = '#61d6a7'
@@ -204,8 +205,7 @@ const calendarDays = computed(() => {
       isCurrentMonth: date.getMonth() === monthIndex,
       isToday: key === todayKey,
       events: dayEvents,
-      visibleEvents: dayEvents.slice(0, 2),
-      hiddenCount: Math.max(0, dayEvents.length - 2),
+      display: summarizeDayEvents(dayEvents),
     })
   }
 
@@ -347,21 +347,45 @@ onMounted(loadCalendarData)
           >
             <div class="calendario-day__header">
               <span class="calendario-day__number">{{ day.date.getDate() }}</span>
-              <span v-if="day.events.length > 0" class="calendario-day__count">{{ day.events.length }}</span>
+              <span v-if="day.events.length > 1" class="calendario-day__count">{{ day.events.length }}</span>
             </div>
 
             <div class="calendario-day__events">
+              <span v-if="day.events.length === 0" class="calendario-day__empty">Sin eventos</span>
+
               <span
-                v-for="evento in day.visibleEvents"
-                :key="evento.id"
-                class="calendario-event"
-                :style="eventStyle(evento)"
+                v-else-if="day.display.isSingle"
+                class="calendario-event calendario-event--single"
+                :style="eventStyle(day.display.primaryEvent)"
               >
-                {{ evento.titulo }}
+                {{ day.display.primaryEvent.titulo }}
               </span>
 
-              <span v-if="day.hiddenCount > 0" class="calendario-day__more">+{{ day.hiddenCount }} más</span>
-              <span v-else-if="day.events.length === 0" class="calendario-day__empty">Sin eventos</span>
+              <span v-else-if="day.display.isUniformGroup" class="calendario-day__summary">
+                <span class="calendario-day__summary-dot" :style="{ backgroundColor: day.display.groups[0].color }"></span>
+                <span class="calendario-day__summary-count">{{ day.display.groups[0].count }}</span>
+              </span>
+
+              <template v-else>
+                <span
+                  class="calendario-event calendario-event--featured"
+                  :style="eventStyle(day.display.primaryEvent)"
+                >
+                  {{ day.display.primaryEvent.titulo }}
+                </span>
+
+                <div class="calendario-day__chips">
+                  <span
+                    v-for="group in day.display.groups.slice(0, 3)"
+                    :key="group.key"
+                    class="calendario-day__chip"
+                    :style="{ backgroundColor: group.color }"
+                    :title="`${group.title} (${group.count})`"
+                  ></span>
+
+                  <span v-if="day.display.groups.length > 3" class="calendario-day__more">+{{ day.display.groups.length - 3 }}</span>
+                </div>
+              </template>
             </div>
           </button>
         </div>
@@ -533,6 +557,7 @@ onMounted(loadCalendarData)
 .calendario-day__events {
   display: grid;
   gap: 8px;
+  min-height: 0;
 }
 
 .calendario-event {
@@ -545,6 +570,59 @@ onMounted(loadCalendarData)
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.calendario-event--single,
+.calendario-event--featured {
+  width: 100%;
+}
+
+.calendario-event--single {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.calendario-day__summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  min-width: 0;
+  padding: 0.45rem 0.6rem;
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+
+.calendario-day__summary-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.calendario-day__summary-count {
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.calendario-day__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.calendario-day__chip {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  flex: 0 0 auto;
 }
 
 .calendario-day__more {

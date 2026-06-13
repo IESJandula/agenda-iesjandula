@@ -1,0 +1,127 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "frontend-build-validate",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "frontend-build-validate-fixed",
+			"type": "shell",
+			"command": "cd",
+			"args": [
+				"/d",
+				"c:\\Users\\filot\\Desktop\\2DAW\\agenda-iesJandula\\frontend\\frontend",
+				"&&",
+				"npm",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "frontend-build-validate-fixed-2",
+			"type": "shell",
+			"command": "cd",
+			"args": [
+				"/d",
+				"c:\\Users\\filot\\Desktop\\2DAW\\agenda-iesjandula\\frontend\\frontend",
+				"&&",
+				"npm",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "frontend-build-mes-actual-fix",
+			"type": "shell",
+			"command": "cd",
+			"args": [
+				"/d",
+				"c:\\Users\\filot\\Desktop\\2DAW\\agenda-iesjandula\\frontend\\frontend",
+				"&&",
+				"npm",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "frontend-build-mes-actual-groups",
+			"type": "shell",
+			"command": "cd",
+			"args": [
+				"/d",
+				"c:\\Users\\filot\\Desktop\\2DAW\\agenda-iesjandula\\frontend\\frontend",
+				"&&",
+				"npm",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "frontend-build-curso-fix",
+			"type": "shell",
+			"command": "cd",
+			"args": [
+				"/d",
+				"c:\\Users\\filot\\Desktop\\2DAW\\agenda-iesjandula\\frontend\\frontend",
+				"&&",
+				"npm",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "frontend-build-course-visual-fix",
+			"type": "shell",
+			"command": "cd",
+			"args": [
+				"/d",
+				"c:\\Users\\filot\\Desktop\\2DAW\\agenda-iesjandula\\frontend\\frontend",
+				"&&",
+				"npm",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		}
+	]
+}

@@ -82,6 +82,12 @@ function indicatorStyle(evento) {
   return { backgroundColor: normalizeHexColor(evento.tipoColor) || '#61d6a7' }
 }
 
+function singleEventStyle(evento) {
+  return {
+    '--event-color': normalizeHexColor(evento.tipoColorResolved ?? evento.tipoColor) || '#61d6a7',
+  }
+}
+
 const selectedDayEvents = computed(() => selectedDay.value?.events ?? [])
 
 const selectedDayLabel = computed(() => {
@@ -155,13 +161,30 @@ onBeforeUnmount(() => {
         <button v-for="day in calendarDays" :key="day.key" type="button" class="tv-month-day" :class="{ 'tv-month-day--muted': !day.isCurrentMonth, 'tv-month-day--today': day.isToday, 'tv-month-day--active': day.events.length > 0, 'tv-month-day--clickable': day.events.length > 0 }" :disabled="day.events.length === 0" @click="openDayModal(day)">
           <div class="tv-month-day__top">
             <strong>{{ day.date.getDate() }}</strong>
-            <span v-if="day.events.length > 0">{{ day.events.length }}</span>
           </div>
 
           <div v-if="day.events.length === 0" class="tv-empty-inline">Sin eventos</div>
-          <div v-else class="tv-indicators">
-            <span v-for="evento in day.visibleIndicators" :key="evento.id" class="tv-indicator" :style="indicatorStyle(evento)"></span>
-            <span v-if="day.hiddenCount > 0" class="tv-more">+{{ day.hiddenCount }}</span>
+          <div v-else-if="day.display.isSingle" class="tv-single-event" :style="singleEventStyle(day.display.primaryEvent)">
+            {{ day.display.primaryEvent.titulo || day.display.primaryEvent.tipoNombre || 'Sin título' }}
+          </div>
+          <div v-else-if="day.display.isUniformGroup" class="tv-indicators tv-indicators--summary">
+            <span class="tv-indicator-group">
+              <span class="tv-indicator" :style="{ backgroundColor: day.display.groups[0].color }"></span>
+              <span v-if="day.display.groups[0].count >= 2" class="tv-more">{{ day.display.groups[0].count }}</span>
+            </span>
+          </div>
+          <div v-else class="tv-mixed-event">
+            <div class="tv-single-event tv-single-event--mixed" :style="singleEventStyle(day.display.primaryEvent)">
+              {{ day.display.primaryEvent.titulo || day.display.primaryEvent.tipoNombre || 'Sin título' }}
+            </div>
+
+            <div class="tv-indicators tv-indicators--chips">
+              <span v-for="group in day.display.groups.slice(0, 3)" :key="group.key" class="tv-indicator-group" :title="group.title">
+                <span class="tv-indicator" :style="{ backgroundColor: group.color }"></span>
+                <span v-if="group.count >= 2" class="tv-more">{{ group.count }}</span>
+              </span>
+              <span v-if="day.display.groups.length > 3" class="tv-more">+{{ day.display.groups.length - 3 }}</span>
+            </div>
           </div>
         </button>
       </div>
@@ -359,11 +382,51 @@ onBeforeUnmount(() => {
   font-weight: 700;
 }
 
+.tv-single-event,
+.tv-mixed-event {
+  min-width: 0;
+  width: 100%;
+}
+
+.tv-single-event {
+  padding: 0.32rem 0.45rem;
+  border-radius: 12px;
+  border-left: 4px solid var(--event-color);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--event-color);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.tv-single-event--mixed {
+  margin-bottom: 6px;
+}
+
 .tv-indicators {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+}
+
+.tv-indicator-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tv-indicators--summary {
+  justify-content: flex-start;
+}
+
+.tv-indicators--chips {
+  gap: 4px;
 }
 
 .tv-indicator {

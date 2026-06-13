@@ -80,6 +80,12 @@ function indicatorStyle(evento) {
   return { backgroundColor: normalizeHexColor(evento.tipoColor) || '#61d6a7' }
 }
 
+function singleEventStyle(evento) {
+  return {
+    '--event-color': normalizeHexColor(evento.tipoColorResolved ?? evento.tipoColor) || '#61d6a7',
+  }
+}
+
 function formatHour(value) {
   if (!value) {
     return ''
@@ -186,13 +192,30 @@ onBeforeUnmount(() => {
           >
             <div class="tv-course-day__top">
               <strong>{{ day.date.getDate() }}</strong>
-              <span v-if="day.events.length > 0">{{ day.events.length }}</span>
             </div>
 
             <div v-if="day.events.length === 0" class="tv-empty-inline">Sin eventos</div>
-            <div v-else class="tv-course-indicators">
-              <span v-for="evento in day.visibleIndicators" :key="evento.id" class="tv-course-indicator" :style="indicatorStyle(evento)"></span>
-              <span v-if="day.hiddenCount > 0" class="tv-course-more">+{{ day.hiddenCount }}</span>
+            <div v-else-if="day.display.isSingle" class="tv-course-single" :style="singleEventStyle(day.display.primaryEvent)">
+              {{ day.display.primaryEvent.titulo || day.display.primaryEvent.tipoNombre || 'Sin título' }}
+            </div>
+            <div v-else-if="day.display.isUniformGroup" class="tv-course-indicators tv-course-indicators--summary">
+              <span class="tv-course-indicator-group">
+                <span class="tv-course-indicator" :style="{ backgroundColor: day.display.groups[0].color }"></span>
+                <span v-if="day.display.groups[0].count >= 2" class="tv-course-more">{{ day.display.groups[0].count }}</span>
+              </span>
+            </div>
+            <div v-else class="tv-course-mixed">
+              <div class="tv-course-single tv-course-single--mixed" :style="singleEventStyle(day.display.primaryEvent)">
+                {{ day.display.primaryEvent.titulo || day.display.primaryEvent.tipoNombre || 'Sin título' }}
+              </div>
+
+              <div class="tv-course-indicators tv-course-indicators--chips">
+                <span v-for="group in day.display.groups.slice(0, 3)" :key="group.key" class="tv-course-indicator-group" :title="group.title">
+                  <span class="tv-course-indicator" :style="{ backgroundColor: group.color }"></span>
+                  <span v-if="group.count >= 2" class="tv-course-more">{{ group.count }}</span>
+                </span>
+                <span v-if="day.display.groups.length > 3" class="tv-course-more">+{{ day.display.groups.length - 3 }}</span>
+              </div>
             </div>
           </button>
         </div>
@@ -375,11 +398,49 @@ onBeforeUnmount(() => {
   font-weight: 700;
 }
 
+.tv-course-single,
+.tv-course-mixed {
+  min-width: 0;
+  width: 100%;
+}
+
+.tv-course-single {
+  padding: 0.24rem 0.38rem;
+  border-radius: 10px;
+  border-left: 4px solid var(--event-color);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--event-color);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tv-course-single--mixed {
+  margin-bottom: 4px;
+}
+
 .tv-course-indicators {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   align-items: center;
+}
+
+.tv-course-indicator-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tv-course-indicators--summary {
+  justify-content: flex-start;
+}
+
+.tv-course-indicators--chips {
+  gap: 3px;
 }
 
 .tv-course-indicator {

@@ -5,6 +5,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, X } from 'lucide-vue-next'
 import AppShell from '../components/layout/AppShell.vue'
 import { getEventos } from '../api/eventos.api'
 import { getTipos } from '../api/tipos.api'
+import { summarizeDayEvents } from './pantallaUtils'
 
 const weekdays = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 const defaultEventColor = '#61d6a7'
@@ -230,8 +231,7 @@ function buildMonthDays(monthDate) {
       isCurrentMonth: date.getMonth() === monthIndex,
       isToday: key === todayKey,
       events: dayEvents,
-      visibleIndicators: dayEvents.slice(0, 3),
-      hiddenCount: Math.max(0, dayEvents.length - 3),
+      display: summarizeDayEvents(dayEvents),
     })
   }
 
@@ -259,6 +259,14 @@ function dayIndicatorStyle(evento) {
 
   return {
     backgroundColor: color,
+  }
+}
+
+function singleEventStyle(evento) {
+  const color = normalizeHexColor(evento.tipoColorResolved) || defaultEventColor
+
+  return {
+    '--event-color': color,
   }
 }
 
@@ -415,16 +423,40 @@ onMounted(loadCourseCalendar)
               >
                 <span class="curso-day__number">{{ day.date.getDate() }}</span>
 
-                <span class="curso-day__indicators">
-                  <span
-                    v-for="evento in day.visibleIndicators"
-                    :key="evento.id"
-                    class="curso-day__indicator"
-                    :style="dayIndicatorStyle(evento)"
-                  ></span>
+                <span v-if="day.events.length > 1" class="curso-day__count">{{ day.events.length }}</span>
+
+                <span v-if="day.display.isEmpty" class="tv-empty-inline">Sin eventos</span>
+
+                <span
+                  v-else-if="day.display.isSingle"
+                  class="curso-day__single"
+                  :style="singleEventStyle(day.display.primaryEvent)"
+                >
+                  {{ day.display.primaryEvent.titulo }}
                 </span>
 
-                <span v-if="day.hiddenCount > 0" class="curso-day__more">+{{ day.hiddenCount }}</span>
+                <span v-else-if="day.display.isUniformGroup" class="curso-day__summary">
+                  <span class="curso-day__indicator" :style="{ backgroundColor: day.display.groups[0].color }"></span>
+                  <span class="curso-day__summary-count">{{ day.display.groups[0].count }}</span>
+                </span>
+
+                <span v-else class="curso-day__mixed">
+                  <span class="curso-day__single curso-day__single--mixed" :style="singleEventStyle(day.display.primaryEvent)">
+                    {{ day.display.primaryEvent.titulo }}
+                  </span>
+
+                  <span class="curso-day__indicators">
+                    <span
+                      v-for="group in day.display.groups.slice(0, 3)"
+                      :key="group.key"
+                      class="curso-day__indicator"
+                      :style="{ backgroundColor: group.color }"
+                      :title="`${group.title} (${group.count})`"
+                    ></span>
+
+                    <span v-if="day.display.groups.length > 3" class="curso-day__more">+{{ day.display.groups.length - 3 }}</span>
+                  </span>
+                </span>
               </button>
             </template>
           </div>
@@ -602,6 +634,7 @@ onMounted(loadCourseCalendar)
   align-content: start;
   cursor: pointer;
   transition: all 0.2s ease;
+  position: relative;
 }
 
 .curso-day:hover {
@@ -643,6 +676,53 @@ onMounted(loadCourseCalendar)
   color: #ffffff;
 }
 
+.curso-day__count {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.curso-day__single,
+.curso-day__summary,
+.curso-day__mixed {
+  width: 100%;
+  min-width: 0;
+}
+
+.curso-day__single {
+  padding: 0.18rem 0.35rem;
+  border-radius: 8px;
+  border-left: 3px solid var(--event-color);
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--event-color);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.curso-day__single--mixed {
+  display: block;
+}
+
+.curso-day__summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.curso-day__summary-count {
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
 .curso-day__indicators {
   min-height: 10px;
   display: flex;
@@ -657,6 +737,19 @@ onMounted(loadCourseCalendar)
   height: 8px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.curso-day__mixed {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+}
+
+.tv-empty-inline {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  opacity: 0.75;
 }
 
 .curso-day__more {
